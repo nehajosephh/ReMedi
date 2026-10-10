@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block body %}
+<main class="app">
+  <div class="header"><a class="logo" href="/"><span class="cross">✚</span>ReMedi</a></div>
+  <h1>Let's get you set up</h1>
+  <p class="sub">It takes about a minute. We'll link you to your GP and pharmacy.</p>
+  <a class="btn btn-primary" href="{{ url_for('patient.setup') }}">Set up my profile</a>
+
+  {% if patients %}
+    <div class="divider">or continue as a demo patient</div>
+    {% for p in patients %}
+      <a class="card" href="{{ url_for('patient.continue_as', patient_id=p.id) }}">
+        <strong>{{ p.first_name }} {{ p.last_name }}</strong><br>
+        <span class="small">{{ p.scheme }}</span>
+      </a>
+    {% endfor %}
+  {% endif %}
+  <p style="margin-top:20px"><a class="link" href="/">Back</a></p>
+</main>
+{% endblock %}

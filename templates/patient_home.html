@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block body %}
+<main class="app">
+  <div class="header">
+    <a class="logo" href="/"><span class="cross">✚</span>ReMedi</a>
+    <span class="greeting">Hi, {{ patient.first_name }} <a href="{{ url_for('logout') }}">Log out</a></span>
+  </div>
+
+  <div class="tiles">
+    <div class="tile dark"><div class="label">Your pharmacy</div><div class="value">{{ pharmacy.name if pharmacy else "Not set" }}</div></div>
+    <div class="tile"><div class="label">Delivery</div><div class="value">{{ "To home" if patient.delivery == "home" else "Collect" }}</div></div>
+  </div>
+
+  <h2>This month</h2>
+  <div class="card small">Your medications will show here in the next step.</div>
+</main>
+{% endblock %}

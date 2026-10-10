@@ -1,0 +1,22 @@
+{
+  "_note": "Synthetic demo data for HackUCD 2026. Not real people, registration numbers or pharmacies.",
+  "pharmacies": [
+    {"id": "ph1", "name": "Griffith Pharmacy", "address": "Griffith Avenue, Dublin 9"},
+    {"id": "ph2", "name": "Drumcondra Pharmacy", "address": "Drumcondra Road, Dublin 9"}
+  ],
+  "doctors": [
+    {"id": "d1", "imc_number": "412345", "name": "Dr Aoife Kelly", "practice": "Drumcondra Family Practice"},
+    {"id": "d2", "imc_number": "498765", "name": "Dr Conor Doyle", "practice": "Glasnevin Medical Centre"}
+  ],
+  "pharmacists": [
+    {"id": "s1", "psi_number": "8812", "name": "Siobhán Murphy", "pharmacy_id": "ph1"},
+    {"id": "s2", "psi_number": "9034", "name": "Rahul Menon", "pharmacy_id": "ph2"}
+  ],
+  "patients": [
+    {"id": "p1", "first_name": "Mary", "last_name": "O'Brien", "dob": "1952-03-14", "phone": "0851234567",
+     "address": "12 Iona Road, Glasnevin, Dublin 9", "eircode": "D09 X2Y3", "scheme": "Medical card",
+     "doctor_id": "d1", "pharmacy_id": "ph1", "delivery": "home"}
+  ],
+  "prescriptions": [],
+  "orders": []
+}

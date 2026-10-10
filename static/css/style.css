@@ -1,0 +1,94 @@
+/* Shared ReMedi styles. Everyone uses these so the three portals look like one app. */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Source+Sans+3:wght@400;600;700&display=swap');
+
+:root {
+  --green: #3f6f4f;
+  --green-dark: #2f5640;
+  --green-soft: #e8f1ea;
+  --bg: #f4f6f4;
+  --card: #ffffff;
+  --ink: #1f2420;
+  --muted: #646b66;
+  --line: #dde3de;
+  --red: #a3332a;
+  --red-soft: #fbefee;
+  --radius: 14px;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: #e9ece9; color: var(--ink);
+       font: 16px/1.45 "Source Sans 3", system-ui, sans-serif; }
+
+/* phone-sized column for patient screens */
+.app { max-width: 420px; min-height: 100vh; margin: 0 auto; background: var(--bg);
+       padding: 22px 20px 40px; display: flex; flex-direction: column; }
+/* wider layout for GP and pharmacy desktops */
+.desk { max-width: 1100px; min-height: 100vh; margin: 0 auto; background: var(--bg); padding: 22px 28px 40px; }
+
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
+.logo { font-family: "Fraunces", Georgia, serif; font-size: 24px; color: var(--green);
+        text-decoration: none; display: flex; align-items: center; gap: 6px; }
+.logo .cross { font-size: 26px; line-height: 1; }
+.greeting { font-size: 14px; color: var(--muted); }
+.greeting a { color: var(--muted); margin-left: 8px; }
+
+h1 { font-size: 26px; margin: 4px 0 6px; }
+h2 { font-size: 18px; margin: 22px 0 10px; }
+.sub { color: var(--muted); margin: 0 0 22px; }
+.small { font-size: 13px; color: var(--muted); }
+
+/* buttons */
+.btn { display: block; width: 100%; text-align: center; padding: 15px 18px; border-radius: 999px;
+       font: inherit; font-weight: 700; cursor: pointer; text-decoration: none; border: 2px solid var(--green); }
+.btn-primary { background: var(--green); color: #fff; }
+.btn-primary:hover { background: var(--green-dark); }
+.btn-outline { background: #fff; color: var(--green); }
+.btn + .btn { margin-top: 12px; }
+.link { color: var(--green); font-weight: 600; }
+
+/* cards */
+.card { display: block; background: var(--card); border: 1.5px solid var(--line); border-radius: var(--radius);
+        padding: 15px 16px; margin-bottom: 10px; color: inherit; text-decoration: none; }
+a.card:hover { border-color: var(--green); }
+.card.selected { border: 2px solid var(--green); background: var(--green-soft); }
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
+.tile { border-radius: var(--radius); padding: 14px; background: #fff; border: 1.5px solid var(--line); }
+.tile.dark { background: var(--green); color: #fff; border-color: var(--green); }
+.tile .label { font-size: 13px; opacity: .85; }
+.tile .value { font-weight: 700; font-size: 19px; margin-top: 4px; }
+
+/* forms */
+form .field { margin-bottom: 14px; }
+label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 5px; }
+input, select { width: 100%; font: inherit; padding: 12px 14px; border: 1.5px solid var(--line);
+                border-radius: 10px; background: #fff; }
+input:focus, select:focus { outline: 3px solid #b9d4c0; border-color: var(--green); }
+.row { display: flex; gap: 10px; }
+.row > * { flex: 1; }
+.error { color: var(--red); font-size: 13px; margin-top: 4px; }
+.field.has-error input, .field.has-error select { border-color: var(--red); }
+.alert { background: var(--red-soft); border: 1.5px solid #e8b9b4; color: var(--red);
+         border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; }
+.hint { background: var(--green-soft); border-radius: 10px; padding: 10px 14px; font-size: 13px; margin-top: 18px; }
+.choice { display: flex; gap: 10px; }
+.choice label { flex: 1; border: 1.5px solid var(--line); border-radius: 10px; padding: 12px; background: #fff;
+                font-weight: 600; cursor: pointer; display: flex; gap: 8px; align-items: center; margin: 0; }
+.choice input { width: auto; accent-color: var(--green); }
+.divider { text-align: center; color: var(--muted); font-size: 13px; margin: 24px 0 12px; }
+
+/* welcome screen */
+.brand { text-align: center; margin: 48px 0 36px; }
+.brand .mark { width: 54px; height: 54px; color: var(--green); }
+.brand .name { font-family: "Fraunces", Georgia, serif; font-size: 44px; color: var(--green); margin: 6px 0 10px; }
+.brand p { color: var(--muted); font-size: 18px; margin: 0 auto; max-width: 280px; }
+.role { display: flex; align-items: center; gap: 14px; background: #fff; border: 1.5px solid var(--line);
+        border-radius: var(--radius); padding: 16px; margin-bottom: 12px; color: inherit; text-decoration: none; }
+.role:hover, .role:focus-visible { border: 2px solid var(--green); padding: 15.5px; outline: none; }
+.role .icon { width: 46px; height: 46px; border-radius: 50%; background: var(--green-soft); color: var(--green);
+              display: grid; place-items: center; flex: none; }
+.role .icon svg { width: 22px; height: 22px; }
+.role .text { flex: 1; }
+.role .title { font-weight: 700; font-size: 17px; }
+.role .desc { color: var(--muted); font-size: 14px; }
+.role .chev { color: var(--muted); font-size: 22px; }
+.footnote { margin-top: auto; padding-top: 30px; text-align: center; font-size: 13px; color: var(--muted); }

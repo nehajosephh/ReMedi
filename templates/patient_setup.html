@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% macro err(name) %}{% if errors[name] %}<div class="error">{{ errors[name] }}</div>{% endif %}{% endmacro %}
+{% macro cls(name) %}field{% if errors[name] %} has-error{% endif %}{% endmacro %}
+{% block body %}
+<main class="app">
+  <div class="header"><a class="logo" href="/"><span class="cross">✚</span>ReMedi</a></div>
+  <h1>Your profile</h1>
+  <p class="sub">So your pharmacy knows it's you.</p>
+
+  {% if errors %}<div class="alert">Please fix the {{ errors|length }} highlighted field{{ 's' if errors|length > 1 }}.</div>{% endif %}
+
+  <form method="post" novalidate>
+    <div class="row">
+      <div class="{{ cls('first_name') }}"><label for="first_name">First name</label>
+        <input id="first_name" name="first_name" value="{{ form.first_name }}" autocomplete="given-name">{{ err('first_name') }}</div>
+      <div class="{{ cls('last_name') }}"><label for="last_name">Last name</label>
+        <input id="last_name" name="last_name" value="{{ form.last_name }}" autocomplete="family-name">{{ err('last_name') }}</div>
+    </div>
+    <div class="{{ cls('dob') }}"><label for="dob">Date of birth</label>
+      <input id="dob" name="dob" type="date" value="{{ form.dob }}">{{ err('dob') }}</div>
+    <div class="{{ cls('phone') }}"><label for="phone">Mobile number</label>
+      <input id="phone" name="phone" type="tel" value="{{ form.phone }}" placeholder="085 123 4567" autocomplete="tel">{{ err('phone') }}</div>
+    <div class="{{ cls('address') }}"><label for="address">Address</label>
+      <input id="address" name="address" value="{{ form.address }}" autocomplete="street-address">{{ err('address') }}</div>
+    <div class="{{ cls('eircode') }}"><label for="eircode">Eircode <span class="small">(optional)</span></label>
+      <input id="eircode" name="eircode" value="{{ form.eircode }}" placeholder="D09 X2Y3" autocomplete="postal-code">{{ err('eircode') }}</div>
+
+    <div class="{{ cls('scheme') }}"><label for="scheme">How do you pay for prescriptions?</label>
+      <select id="scheme" name="scheme">
+        <option value="">Choose…</option>
+        {% for s in schemes %}<option {{ 'selected' if form.scheme == s }}>{{ s }}</option>{% endfor %}
+      </select>{{ err('scheme') }}</div>
+
+    <div class="{{ cls('doctor_id') }}"><label for="doctor_id">Your GP</label>
+      <select id="doctor_id" name="doctor_id">
+        <option value="">Choose…</option>
+        {% for d in doctors %}<option value="{{ d.id }}" {{ 'selected' if form.doctor_id == d.id }}>{{ d.name }}, {{ d.practice }}</option>{% endfor %}
+      </select>{{ err('doctor_id') }}</div>
+
+    <div class="{{ cls('pharmacy_id') }}"><label for="pharmacy_id">Your pharmacy</label>
+      <select id="pharmacy_id" name="pharmacy_id">
+        <option value="">Choose…</option>
+        {% for ph in pharmacies %}<option value="{{ ph.id }}" {{ 'selected' if form.pharmacy_id == ph.id }}>{{ ph.name }}, {{ ph.address }}</option>{% endfor %}
+      </select>{{ err('pharmacy_id') }}</div>
+
+    <div class="field"><label>How do you usually want your medicine?</label>
+      <div class="choice">
+        <label><input type="radio" name="delivery" value="home" {{ 'checked' if form.delivery != 'collect' }}> Deliver to my home</label>
+        <label><input type="radio" name="delivery" value="collect" {{ 'checked' if form.delivery == 'collect' }}> Collect in store</label>
+      </div></div>
+
+    <button class="btn btn-primary" type="submit">Create my profile</button>
+  </form>
+  <p style="margin-top:16px"><a class="link" href="{{ url_for('patient.start') }}">Back</a></p>
+</main>
+{% endblock %}
