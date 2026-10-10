@@ -192,7 +192,7 @@ def home():
         ),
     }
     return render_template(
-        "doctor_dashboard.html",
+        "doctor/doctor_dashboard.html",
         doctor=doc,
         pending=pending,
         selected=selected,
