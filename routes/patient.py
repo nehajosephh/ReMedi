@@ -2,9 +2,9 @@
 import re
 import uuid
 
-from flask import Blueprint, redirect, render_template, request, session, url_for
+from flask import Blueprint, jsonify, redirect, render_template, request, session, url_for
 from services.prescription_rules import item_state, next_due_date, parse_date, repeats_left, today
-
+from services.ai_assistant import understand_request
 from services.storage import find_by, load_data, login_required, save_data
 
 patient_bp = Blueprint("patient", __name__, url_prefix="/patient")
@@ -173,3 +173,19 @@ def review():
                            items=[meds[i] for i in chosen],
                            gp_items=[meds[i] for i in gp_requests],
                            delivery=delivery)
+
+
+@patient_bp.route("/assist", methods=["POST"])
+@login_required("patient")
+def assist():
+    """AI search bar: turn 'I don't need the cholesterol meds' into ticks and unticks."""
+    data = load_data()
+    patient = current_patient(data)
+    body = request.get_json(silent=True) or {}
+    meds = build_med_list(data, patient["id"])
+    ticked = [i for i in body.get("ticked", []) if any(m["id"] == i for m in meds)]
+    result = understand_request(body.get("message", ""), meds, ticked,
+                                last_order_items(data, patient["id"]))
+    if not result["ok"]:
+        return jsonify(result), 400
+    return jsonify(result)

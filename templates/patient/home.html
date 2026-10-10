@@ -28,7 +28,7 @@
 
     {% for m in meds %}
       {% if m.can_order %}
-        <label class="med {{ 'on' if m.ticked }}">
+        <label class="med {{ 'on' if m.ticked }}" data-id="{{ m.id }}">
           <span class="med-text">
             <strong>{{ m.drug }} {{ m.strength }}</strong>
             <span class="small">
@@ -42,7 +42,7 @@
           <span class="box" aria-hidden="true"></span>
         </label>
       {% else %}
-        <div class="med blocked">
+        <div class="med blocked" data-id="{{ m.id }}">
           <span class="med-text">
             <strong>{{ m.drug }} {{ m.strength }}</strong>
             <span class="warn">{{ m.message }}</span>
@@ -57,12 +57,16 @@
       <div class="card small">No repeat prescriptions on file yet. Your GP can add them.</div>
     {% endfor %}
 
-    <h3 class="tell-us">Or tell us in your own words</h3>
+     <h3 class="tell-us">Or tell us in your own words</h3>
     <div class="ai-row">
-      <input type="text" id="ai-message" placeholder="Same as last month, no inhaler" maxlength="300" disabled>
-      <button type="button" class="mic" disabled aria-label="Speak">🎤</button>
+      <input type="text" id="ai-message" placeholder="I don't need the cholesterol meds this month" maxlength="300"
+             autocomplete="off" aria-label="Tell us what you need">
+      <button type="button" class="mic" id="mic-btn" aria-label="Speak instead of typing">🎤</button>
     </div>
-    <p class="small">Coming next: AI ticks the boxes for you. Checked by a pharmacist before anything is sent.</p>
+    <button type="button" class="btn btn-outline ai-go" id="ai-go">Update my list</button>
+    <p class="small">You can say "cholesterol tablets" or "my painkillers". AI ticks the boxes, you check them, and a pharmacist checks every order.</p>
+    <div id="ai-result" class="ai-result" hidden></div>
+    <input type="hidden" name="ai_message" id="ai-message-sent">
 
     <div class="sticky-bottom">
       <button class="btn btn-primary" type="submit" id="review-btn">Review order</button>
