@@ -109,37 +109,28 @@ def build_view(renewal, patient, pharmacies):
 
 
 def issue_prescription(data, renewal, doc, months):
-    """Replace the old script with a new one in the shared prescription format."""
     prescriptions = data.setdefault("prescriptions", [])
-    old = find(prescriptions, "id", renewal.get("prescription_id"))
-    if old is None:  # fall back to matching on the medicine name, e.g. "Amlodipine 5mg"
-        old = next((rx for rx in prescriptions
-                    if rx.get("patient_id") == renewal["patient_id"]
-                    and f"{rx.get('drug')} {rx.get('strength')}" == renewal["medication"]
-                    and rx.get("status") != "replaced"), None)
-    if old:
-        old["status"] = "replaced"
-    old = old or {}
-    today = date.today()
-    prescriptions.append({
-        "id": f"rx{uuid.uuid4().hex[:6]}",
-        "patient_id": renewal["patient_id"],
-        "doctor_id": doc["id"],
-        "drug": old.get("drug", renewal["medication"]),
-        "strength": old.get("strength", ""),
-        "directions": old.get("directions", renewal.get("dosage", "")),
-        "qty": old.get("qty", 28),
-        "supply_days": old.get("supply_days", 28),
-        "repeats_total": months,
-        "repeats_used": 0,
-        "issued": today.isoformat(),
-        "expiry": add_months(today, months).isoformat(),
-        "controlled": old.get("controlled", False),
-        "important": old.get("important", True),
-        "last_dispensed": old.get("last_dispensed"),
-        "status": "active",
-        "replaces": old.get("id"),
-    })
+    old = find(prescriptions, "id", renewal.get("prescription_id")) if renewal.get("prescription_id") else None
+    if old is None:
+        old = next(
+            (
+                p for p in prescriptions
+                if p.get("patient_id") == renewal["patient_id"]
+                and medicine_name(p) == renewal["medication"]
+                and p.get("status") != "replaced"
+            ),
+            None,
+        )
+    if old is None:
+        old = {
+            "patient_id": renewal["patient_id"],
+            "drug": renewal["medication"],
+            "strength": "",
+            "directions": renewal.get("dosage", ""),
+        }
+    new = renew_prescription(data, old, doc, months)
+    renewal["new_prescription_id"] = new["id"]
+    return new
 
 
 @doctor_bp.route("/login", methods=["GET", "POST"])
@@ -252,12 +243,48 @@ EXPIRING_SOON_DAYS = 30
 STATE_ORDER = {"expired": 0, "soon": 1, "active": 2}
 
 
+def medicine_name(prescription):
+    return f"{prescription.get('drug', '')} {prescription.get('strength', '')}".strip()
+
+
+def repeats_left(prescription):
+    return prescription.get("repeats_total", 0) - prescription.get("repeats_used", 0)
+
+
+def renew_prescription(data, old, doc, months):
+    if old.get("controlled"):
+        months = 1
+    today = date.today()
+    old["status"] = "replaced"
+    new = {
+        "controlled": old.get("controlled", False),
+        "important": old.get("important", False),
+        "status": "active",
+        "id": f"rx{datetime.now().strftime('%H%M%S%f')}",
+        "patient_id": old["patient_id"],
+        "doctor_id": doc["id"],
+        "drug": old.get("drug", ""),
+        "strength": old.get("strength", ""),
+        "directions": old.get("directions", ""),
+        "qty": old.get("qty", 0),
+        "supply_days": old.get("supply_days", 28),
+        "repeats_total": months,
+        "repeats_used": 0,
+        "issued": today.isoformat(),
+        "expiry": add_months(today, months).isoformat(),
+        "last_dispensed": old.get("last_dispensed", ""),
+        "replaces": old.get("id", ""),
+    }
+    data.setdefault("prescriptions", []).append(new)
+    return new
+
+
 def prescription_state(prescription):
     today = date.today()
-    expiry = prescription.get("expiry_date")
+    expiry = prescription.get("expiry")
     if expiry and date.fromisoformat(expiry) < today:
         return "expired", "Expired"
-    if prescription.get("repeats_left", 1) <= 0:
+    if repeats_left(prescription) <= 0:
         return "expired", "No repeats left"
     if expiry and (date.fromisoformat(expiry) - today).days <= EXPIRING_SOON_DAYS:
         return "soon", "Expires soon"
@@ -267,8 +294,11 @@ def prescription_state(prescription):
 def prescription_view(prescription):
     view = dict(prescription)
     view["state"], view["state_label"] = prescription_state(prescription)
-    view["expiry_display"] = long_date(prescription.get("expiry_date")) or "no expiry date"
-    view["issued_display"] = long_date(prescription.get("issued_at")) or "unknown"
+    view["medication"] = medicine_name(prescription)
+    view["repeats_left"] = max(repeats_left(prescription), 0)
+    view["expiry_display"] = long_date(prescription.get("expiry")) or "no expiry date"
+    view["issued_display"] = long_date(prescription.get("issued")) or "unknown"
+    view["dispensed_display"] = long_date(prescription.get("last_dispensed")) or "not yet"
     return view
 
 
@@ -278,7 +308,7 @@ def current_prescriptions(data, patient_id):
         for p in data.get("prescriptions", [])
         if p.get("patient_id") == patient_id and p.get("status") != "replaced"
     ]
-    return sorted(scripts, key=lambda s: (STATE_ORDER[s["state"]], s.get("medication", "")))
+    return sorted(scripts, key=lambda s: (STATE_ORDER[s["state"]], s["medication"]))
 
 
 def plain(text):
@@ -366,47 +396,34 @@ def renew_from_profile(patient_id, prescription_id):
         flash("That patient isn't registered with you.", "error")
         return redirect(url_for("doctor.patients"))
 
+    back = redirect(url_for("doctor.patient_profile", patient_id=patient_id))
     old = find(data.get("prescriptions", []), "id", prescription_id)
     if old is None or old.get("patient_id") != patient_id:
         flash("That prescription doesn't belong to this patient.", "error")
-        return redirect(url_for("doctor.patient_profile", patient_id=patient_id))
+        return back
     if old.get("status") == "replaced":
         flash("That prescription has already been renewed.", "error")
-        return redirect(url_for("doctor.patient_profile", patient_id=patient_id))
+        return back
 
     months = RENEWAL_MONTHS.get(request.form.get("months", ""))
     if months is None:
         flash("Choose how long to renew the prescription for.", "error")
-        return redirect(url_for("doctor.patient_profile", patient_id=patient_id))
+        return back
+    if old.get("controlled") and months != 1:
+        flash("Controlled drugs can only be renewed for one month at a time.", "error")
+        return back
 
-    today = date.today()
-    now = datetime.now()
-    expiry = add_months(today, months)
-    old["status"] = "replaced"
-    data["prescriptions"].append({
-        "id": f"rx{now.strftime('%H%M%S%f')}",
-        "patient_id": patient_id,
-        "doctor_id": doc["id"],
-        "medication": old.get("medication", ""),
-        "dosage": old.get("dosage", ""),
-        "issued_at": today.isoformat(),
-        "expiry_date": expiry.isoformat(),
-        "repeats_total": months,
-        "repeats_left": months,
-        "status": "active",
-    })
-
+    new = renew_prescription(data, old, doc, months)
     for renewal in data.get("renewal_requests", []):
-        if (
-            renewal.get("patient_id") == patient_id
-            and renewal.get("medication") == old.get("medication")
-            and renewal.get("status") == "pending"
-        ):
+        same_script = renewal.get("prescription_id") == old.get("id")
+        same_medicine = renewal.get("patient_id") == patient_id and renewal.get("medication") == medicine_name(old)
+        if renewal.get("status") == "pending" and (same_script or same_medicine):
             renewal["status"] = "renewed"
             renewal["renewed_months"] = months
-            renewal["decided_at"] = now.isoformat(timespec="minutes")
+            renewal["new_prescription_id"] = new["id"]
+            renewal["decided_at"] = datetime.now().isoformat(timespec="minutes")
             renewal["decided_by"] = doc["id"]
 
     save_data(data)
-    flash(f"Renewed {old.get('medication')} for {full_name(patient)} until {long_date(expiry.isoformat())}.", "success")
-    return redirect(url_for("doctor.patient_profile", patient_id=patient_id))
+    flash(f"Renewed {medicine_name(old)} for {full_name(patient)} until {long_date(new['expiry'])}.", "success")
+    return back
