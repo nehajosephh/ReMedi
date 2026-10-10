@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My patients | ReMedi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,600&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/doctor.css') }}">
+</head>
+<body>
+  {% include "doctor/_header.html" %}
+
+  <main class="page">
+    <div class="row wrap between page-head">
+      <h1 class="page-title">My patients</h1>
+      <form method="get" action="{{ url_for('doctor.patients') }}" class="search" role="search">
+        <label for="q" class="visually-hidden">Search patients by name</label>
+        <input id="q" name="q" type="search" placeholder="Search by name" value="{{ query }}">
+        <button type="submit" class="btn btn-primary">Search</button>
+      </form>
+    </div>
+
+    {% if not patients %}
+      <section class="card empty">
+        {% if query %}
+          <h2>No patients called "{{ query }}"</h2>
+          <p class="muted"><a href="{{ url_for('doctor.patients') }}">Show all patients</a></p>
+        {% else %}
+          <h2>No patients yet</h2>
+          <p class="muted">Patients registered with you will show up here.</p>
+        {% endif %}
+      </section>
+    {% else %}
+      <section class="card list patient-list">
+        {% for p in patients %}
+          <a href="{{ url_for('doctor.patient_profile', patient_id=p.id) }}" class="list-item patient-row">
+            <span class="row"><strong>{{ p.name }}</strong><span class="muted">Born {{ p.dob_display }}</span></span>
+            <span class="muted">{{ p.script_count }} prescription{{ '' if p.script_count == 1 else 's' }}</span>
+            {% if p.needs_attention %}
+              <span class="warning">{{ p.needs_attention }} expired or expiring soon</span>
+            {% endif %}
+            {% if p.review_overdue %}
+              <span class="warning">Medication review overdue</span>
+            {% endif %}
+          </a>
+        {% endfor %}
+      </section>
+    {% endif %}
+  </main>
+</body>
+</html>
