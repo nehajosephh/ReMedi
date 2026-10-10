@@ -146,14 +146,14 @@ def login():
     data = load_data()
     practices = practice_names(data)
     if request.method == "GET":
-        return render_template("doctor_login.html", practices=practices, form={}, error=None)
+        return render_template("doctor/doctor_login.html", practices=practices, form={}, error=None)
 
     imc_number = request.form.get("imc_number", "").strip()
     practice = request.form.get("practice", "")
     password = request.form.get("password", "")
     doc, error = check_login(data, imc_number, practice, password)
     if error:
-        return render_template("doctor_login.html", practices=practices, form=request.form, error=error), 400
+        return render_template("doctor/doctor_login.html", practices=practices, form=request.form, error=error), 400
 
     session.clear()
     session["role"] = "doctor"
