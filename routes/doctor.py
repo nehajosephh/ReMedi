@@ -6,8 +6,7 @@ from pathlib import Path
 
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 
-doctor_bp = Blueprint("doctor", __name__, url_prefix="/gp")
-
+doctor_bp = Blueprint("doctor", __name__, url_prefix="/doctor")
 DATA_FILE = Path(__file__).resolve().parent.parent / "data" / "data.json"
 RENEWAL_MONTHS = {"6": 6, "3": 3, "1": 1}
 REVIEW_OVERDUE_DAYS = 365
