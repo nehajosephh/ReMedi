@@ -1,0 +1,241 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReMedi | Pharmacist Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pharmacy.css') }}">
+</head>
+
+<body class="dashboard-body">
+
+<div class="pharmacy-dashboard">
+
+    <!-- HEADER -->
+    <header class="dashboard-header">
+
+        <div class="header-left">
+            <span class="medical-cross">✚</span>
+            <span class="dashboard-brand">ReMedi</span>
+            <span class="header-divider"></span>
+            <span class="pharmacy-name">
+                Greenfield Pharmacy, Drumcondra
+            </span>
+        </div>
+
+        <div class="header-right">
+            <span class="verified-badge">✓ Demo staff</span>
+            <span class="staff-name">Aoife Brennan</span>
+            <a href="{{ url_for('pharmacy.login') }}" class="sign-out">
+                Sign out
+            </a>
+        </div>
+
+    </header>
+
+    <main class="dashboard-main">
+
+        <!-- SUMMARY CARDS -->
+        <section class="summary-grid">
+
+            <div class="summary-card summary-primary">
+                <span>New orders</span>
+                <strong>12</strong>
+            </div>
+
+            <div class="summary-card summary-attention">
+                <span>Needs attention</span>
+                <strong>3</strong>
+            </div>
+
+            <div class="summary-card">
+                <span>Waiting on GP</span>
+                <strong>2</strong>
+            </div>
+
+            <div class="summary-card">
+                <span>Ready for driver</span>
+                <strong>7</strong>
+            </div>
+
+        </section>
+
+        <!-- MAIN TWO-COLUMN LAYOUT -->
+        <section class="dashboard-columns">
+
+            <!-- LEFT: ORDERS -->
+            <aside class="orders-panel">
+
+                <h2>Orders, oldest first</h2>
+
+                <button class="order-item selected" data-order="mary">
+                    <div class="order-title">
+                        <strong>Mary O'Sullivan</strong>
+                        <span>09:12</span>
+                    </div>
+
+                    <p>3 items, delivery Thu</p>
+
+                    <span class="order-warning">
+                        Changed vs last month, script expired
+                    </span>
+                </button>
+
+                <button class="order-item" data-order="patrick">
+                    <div class="order-title">
+                        <strong>Patrick Murphy</strong>
+                        <span>09:31</span>
+                    </div>
+
+                    <p>5 items, collect</p>
+                    <span>Same as last month</span>
+                </button>
+
+                <button class="order-item" data-order="brid">
+                    <div class="order-title">
+                        <strong>Bríd Gallagher</strong>
+                        <span>09:44</span>
+                    </div>
+
+                    <p>2 items, delivery Fri</p>
+
+                    <span class="order-warning">
+                        Last repeat on script
+                    </span>
+                </button>
+
+                <button class="order-item" data-order="sean">
+                    <div class="order-title">
+                        <strong>Seán O'Connor</strong>
+                        <span>10:02</span>
+                    </div>
+
+                    <p>1 item, delivery Thu</p>
+
+                    <span class="order-warning">
+                        Ordered 9 days early
+                    </span>
+                </button>
+
+            </aside>
+
+            <!-- RIGHT: PATIENT DETAILS -->
+            <div class="order-details">
+
+                <section class="patient-card">
+
+                    <h2 id="patient-name">
+                        Mary O'Sullivan
+                    </h2>
+
+                    <p id="patient-info">
+                        Medical card. Delivery Thu 16 Oct, afternoon.
+                        GP: Glasnevin Family Practice, Glasnevin.
+                    </p>
+
+                </section>
+
+                <!-- AI SUMMARY -->
+                <section class="ai-summary">
+
+                    <h3>
+                        AI summary of the patient's request
+                    </h3>
+
+                    <p id="ai-text">
+                        Patient typed "same as last month but no inhaler".
+                        Matched to 3 items. Salbutamol removed.
+                        Nothing added.
+                    </p>
+
+                    <small>
+                        Check the list below. The summary can be wrong.
+                    </small>
+
+                </section>
+
+                <!-- MEDICINE COMPARISON -->
+                <section class="medicine-table-wrapper">
+
+                    <table class="medicine-table">
+
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Last month</th>
+                                <th>This month</th>
+                                <th>Script</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="medicine-table-body">
+
+                            <tr>
+                                <td>Atorvastatin 20mg</td>
+                                <td>28</td>
+                                <td>28</td>
+                                <td>3 of 6 left</td>
+                            </tr>
+
+                            <tr>
+                                <td>Metformin 500mg</td>
+                                <td>56</td>
+                                <td>56</td>
+                                <td>3 of 6 left</td>
+                            </tr>
+
+                            <tr>
+                                <td>Salbutamol 100mcg</td>
+                                <td>1</td>
+                                <td class="warning-text">Removed</td>
+                                <td>2 of 6 left</td>
+                            </tr>
+
+                            <tr>
+                                <td>Amlodipine 5mg</td>
+                                <td>28</td>
+                                <td class="warning-text">Wanted</td>
+                                <td class="warning-text">Expired 2 Oct</td>
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </section>
+
+                <!-- ACTION BUTTONS -->
+                <div class="dashboard-actions">
+
+                    <button class="action-primary" id="approve-btn">
+                        Approve and pack
+                    </button>
+
+                    <button class="action-outline" id="renewal-btn">
+                        Send renewal request to GP
+                    </button>
+
+                    <button class="action-neutral" id="message-btn">
+                        Message patient
+                    </button>
+
+                </div>
+
+                <p id="action-feedback"
+                   class="action-feedback"
+                   role="status"
+                   aria-live="polite"></p>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/pharmacy.js') }}"></script>
+
+</body>
+</html>
