@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GP interface | ReMedi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,600&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/doctor.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-left">
+      <svg width="28" height="28" viewBox="0 0 30 30" aria-hidden="true"><path d="M11 3h8v8h8v8h-8v8h-8v-8H3v-8h8z" fill="currentColor"/></svg>
+      <span class="wordmark">ReMedi</span>
+      <span class="practice">{{ doctor.practice }}</span>
+    </div>
+    <div class="topbar-right">
+      <span class="badge badge-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>
+        Medical Council verified
+      </span>
+      <span>{{ doctor.name }}</span>
+      <a href="{{ url_for('logout') }}" class="topbar-link">Sign out</a>
+    </div>
+  </header>
+
+  <main class="page">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}" role="status">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <section class="stats">
+      <div class="stat stat-primary"><span>Renewal requests</span><strong>{{ stats.pending }}</strong></div>
+      <div class="stat stat-warning"><span>Review overdue</span><strong>{{ stats.overdue }}</strong></div>
+      <div class="stat"><span>Renewed today</span><strong>{{ stats.renewed_today }}</strong></div>
+    </section>
+
+    {% if not pending %}
+      <section class="card empty">
+        <h2>No requests waiting</h2>
+        <p class="muted">When a pharmacy asks you to renew a prescription, it will show up here.</p>
+      </section>
+    {% else %}
+      <div class="columns">
+        <section class="card list">
+          <h2 class="list-title">Requests from pharmacies</h2>
+          {% for item in pending %}
+            <a href="{{ url_for('doctor.home', request=item.id) }}" class="list-item {% if item.id == selected.id %}active{% endif %}">
+              <span class="row"><strong>{{ item.patient_name }}</strong><span class="muted">{{ item.requested_time }}</span></span>
+              <span class="muted">{{ item.medication }}, {{ item.reason }}</span>
+              {% if item.review_overdue %}
+                <span class="warning">No review in {{ item.months_since_review }} months</span>
+              {% else %}
+                <span class="muted">From {{ item.pharmacy_name }}</span>
+              {% endif %}
+            </a>
+          {% endfor %}
+        </section>
+
+        <section class="detail">
+          <div class="card">
+            <h2>{{ selected.patient_name }}</h2>
+            <p class="muted">Born {{ selected.dob_display }}. Last medication review: {{ selected.last_review_display }}.</p>
+          </div>
+
+          <div class="card stack">
+            <span class="label">Requested</span>
+            <div class="row wrap between">
+              <strong class="big">{{ selected.medication }}</strong>
+              <span class="muted">{{ selected.dosage }}</span>
+            </div>
+            <p>{{ selected.previous_script }}</p>
+            {% if selected.review_overdue %}
+              <p class="warning">No medication review in {{ selected.months_since_review }} months.</p>
+            {% endif %}
+            {% if selected.note %}
+              <div class="pharmacy-note"><strong>Pharmacy note:</strong> {{ selected.note }}</div>
+            {% endif %}
+          </div>
+
+          <form method="post" action="{{ url_for('doctor.decide', request_id=selected.id) }}" class="card row wrap end">
+            <div class="field grow">
+              <label for="months">Renew for</label>
+              <select id="months" name="months">
+                <option value="6">6 months (5 repeats)</option>
+                <option value="3">3 months (2 repeats)</option>
+                <option value="1">1 month only</option>
+              </select>
+            </div>
+            <button type="submit" name="action" value="renew" class="btn btn-primary">Renew and send to pharmacy</button>
+          </form>
+
+          <div class="row wrap">
+            <form method="post" action="{{ url_for('doctor.decide', request_id=selected.id) }}">
+              <button type="submit" name="action" value="review" class="btn btn-outline">Ask patient to book a review</button>
+            </form>
+            <details class="decline">
+              <summary class="btn btn-plain">Decline with reason</summary>
+              <form method="post" action="{{ url_for('doctor.decide', request_id=selected.id) }}" class="card stack decline-form">
+                <div class="field">
+                  <label for="reason">Reason for the pharmacy</label>
+                  <input id="reason" name="reason" required placeholder="e.g. Dose needs to change">
+                </div>
+                <button type="submit" name="action" value="decline" class="btn btn-plain">Confirm decline</button>
+              </form>
+            </details>
+          </div>
+        </section>
+      </div>
+    {% endif %}
+  </main>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GP sign in | ReMedi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,600&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/doctor.css') }}">
+</head>
+<body class="login-page">
+  <main class="login">
+    <div class="login-top">
+      <a href="{{ url_for('welcome') }}" class="back" aria-label="Back to welcome">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+      </a>
+      <span class="wordmark">ReMedi</span>
+      <span class="badge">GP</span>
+    </div>
+
+    <h1>GP sign in</h1>
+    <p class="muted">Renew prescriptions requested by your patients' pharmacies.</p>
+
+    {% if error %}
+      <div class="alert alert-error" role="alert">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('doctor.login') }}" class="stack" novalidate>
+      <div class="field">
+        <label for="imc_number">Medical Council registration number</label>
+        <input id="imc_number" name="imc_number" inputmode="numeric" autocomplete="username" placeholder="e.g. 412345" value="{{ form.get('imc_number', '') }}">
+      </div>
+
+      <div class="field">
+        <label for="practice">GP practice</label>
+        <select id="practice" name="practice">
+          <option value="">Choose your practice</option>
+          {% for practice in practices %}
+            <option value="{{ practice }}" {% if form.get('practice') == practice %}selected{% endif %}>{{ practice }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Your password">
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-full">Verify and sign in</button>
+    </form>
+
+    <div class="note">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>
+      <span>Your number is checked against the Medical Council register. You'll only see requests for your own patients.</span>
+    </div>
+
+    <p class="footer-note">Not a GP? <a href="{{ url_for('welcome') }}">Go back</a></p>
+  </main>
+</body>
+</html>
