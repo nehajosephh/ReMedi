@@ -37,7 +37,10 @@
     {% endif %}
 
     <section class="stack">
-      <h2>Prescriptions</h2>
+      <div class="row wrap between section-head">
+        <h2>Prescriptions</h2>
+        <a href="{{ url_for('doctor.new_prescription', patient_id=patient.id) }}" class="btn btn-primary btn-link">New prescription</a>
+      </div>
       {% if not prescriptions %}
         <div class="card empty">
           <p class="muted">No prescriptions on record for this patient.</p>
