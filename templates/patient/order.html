@@ -6,13 +6,43 @@
     <span class="greeting">Hi, {{ patient.first_name }} <a href="{{ url_for('logout') }}">Log out</a></span>
   </div>
 
+  {% if error %}<div class="alert">{{ error }}</div>{% endif %}
+  {% if cancelled %}<div class="alert">Payment cancelled. Nothing was charged. You can try again below.</div>{% endif %}
+  {% if just_paid %}<div class="banner banner-ok"><strong>Payment received</strong><span>Thank you. Stripe confirmed your payment.</span></div>{% endif %}
+
   <p class="small" style="margin:0">Order {{ order.id }}</p>
-  <h1>Sent to {{ pharmacy.name if pharmacy else "your pharmacy" }}</h1>
-  <p class="sub">
-    {% if order.status == "needs_attention" %}A pharmacist is checking it. Some items are waiting on your GP.
-    {% elif order.status == "pending" %}A pharmacist will check it, usually within 1 working day.
-    {% else %}Status: {{ order.status | replace("_", " ") }}{% endif %}
-  </p>
+  {% set inv = order.invoice %}
+
+  {% if order.payment_status == "paid" %}
+    <h1>Paid. {{ "On its way soon." if order.fulfilment == "delivery" else "All done." }}</h1>
+    <p class="sub">Paid {{ order.paid_by or "" }}{% if order.amount_paid_cents %}, EUR {{ "%.2f"|format(order.amount_paid_cents / 100) }}{% endif %}.</p>
+  {% elif order.payment_status == "awaiting_payment" %}
+    <h1>Ready. Please pay to send it out.</h1>
+  {% elif order.payment_status == "pay_in_store" %}
+    <h1>Ready to collect</h1>
+    <p class="sub">Pay at the counter when you collect from {{ pharmacy.name if pharmacy else "your pharmacy" }}.</p>
+  {% else %}
+    <h1>Sent to {{ pharmacy.name if pharmacy else "your pharmacy" }}</h1>
+    <p class="sub">
+      {% if order.status == "needs_attention" %}A pharmacist is checking it. Some items are waiting on your GP.
+      {% else %}A pharmacist will check and price it, usually within 1 working day. We'll let you know when it's ready.{% endif %}
+    </p>
+  {% endif %}
+
+  {% if inv %}
+    <h2>Your invoice</h2>
+    <div class="card invoice">
+      <div class="line"><span>Prescription ({{ patient.scheme }})</span><span>EUR {{ "%.2f"|format(inv.medicines_cents / 100) }}</span></div>
+      {% if inv.delivery_cents %}<div class="line"><span>Home delivery</span><span>EUR {{ "%.2f"|format(inv.delivery_cents / 100) }}</span></div>{% endif %}
+      <div class="line total"><span>Total</span><span>EUR {{ "%.2f"|format(inv.total_cents / 100) }}</span></div>
+    </div>
+    {% if order.payment_status == "awaiting_payment" %}
+      <form method="post" action="{{ url_for('payments.checkout', order_id=order.id) }}">
+        <button class="btn btn-primary" type="submit">Pay EUR {{ "%.2f"|format(inv.total_cents / 100) }} by card</button>
+      </form>
+      <p class="small" style="text-align:center">Secure payment with Stripe (test mode: card 4242 4242 4242 4242, any future date, any CVC).</p>
+    {% endif %}
+  {% endif %}
 
   <h2>Items</h2>
   {% for item in order["items"] %}<div class="card"><strong>{{ item.medicine_name }}</strong>
@@ -28,9 +58,13 @@
     <div class="card small">{{ order.patient_message }}</div>
   {% endif %}
 
+  {% if order.messages %}
+    <h2>Messages from the pharmacy</h2>
+    {% for m in order.messages %}<div class="card small">{{ m.text }}</div>{% endfor %}
+  {% endif %}
+
   <h2>{{ "Delivery to" if order.fulfilment == "delivery" else "Collect from" }}</h2>
-  <div class="card small">{{ patient.address if order.fulfilment == "delivery" else pharmacy.name }}
-    · Pay {{ "on delivery" if order.fulfilment == "delivery" else "when you collect" }}</div>
+  <div class="card small">{{ patient.address if order.fulfilment == "delivery" else (pharmacy.name if pharmacy else "Your pharmacy") }}</div>
 
   <p style="margin-top:20px"><a class="link" href="{{ url_for('patient.home') }}">Back to my medications</a></p>
 </main>

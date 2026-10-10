@@ -116,7 +116,7 @@
       "repeats_used": 3,
       "issued": "2026-06-20",
       "expiry": "2026-12-20",
-      "last_dispensed": "2026-09-16"
+      "last_dispensed": "2026-09-15"
     },
     {
       "controlled": false,
@@ -134,7 +134,7 @@
       "repeats_used": 3,
       "issued": "2026-06-20",
       "expiry": "2026-12-20",
-      "last_dispensed": "2026-09-16"
+      "last_dispensed": "2026-09-15"
     },
     {
       "controlled": false,
@@ -152,7 +152,7 @@
       "repeats_used": 5,
       "issued": "2026-04-15",
       "expiry": "2026-10-15",
-      "last_dispensed": "2026-09-16"
+      "last_dispensed": "2026-09-15"
     },
     {
       "controlled": false,
@@ -188,12 +188,12 @@
       "repeats_used": 6,
       "issued": "2026-04-02",
       "expiry": "2026-10-02",
-      "last_dispensed": "2026-09-16"
+      "last_dispensed": "2026-09-15"
     },
     {
       "controlled": false,
       "important": true,
-      "status": "replaced",
+      "status": "active",
       "id": "rx6",
       "patient_id": "p2",
       "doctor_id": "d1",
@@ -225,25 +225,6 @@
       "issued": "2026-03-30",
       "expiry": "2026-09-30",
       "last_dispensed": "2026-09-12"
-    },
-    {
-      "id": "rx82b4a8",
-      "patient_id": "p2",
-      "doctor_id": "d1",
-      "drug": "Levothyroxine",
-      "strength": "50mcg",
-      "directions": "1 tablet each morning",
-      "qty": 28,
-      "supply_days": 28,
-      "repeats_total": 6,
-      "repeats_used": 0,
-      "issued": "2026-10-10",
-      "expiry": "2027-04-10",
-      "controlled": false,
-      "important": true,
-      "last_dispensed": "2026-09-20",
-      "status": "active",
-      "replaces": "rx6"
     }
   ],
   "orders": [
@@ -251,7 +232,7 @@
       "id": "ord0",
       "patient_id": "p1",
       "pharmacy_id": "ph1",
-      "created_at": "2026-09-16T09:30",
+      "created_at": "2026-09-15T09:30",
       "status": "delivered",
       "payment_method": "cash",
       "payment_status": "paid",
@@ -301,45 +282,6 @@
           "quantity": 28
         }
       ]
-    },
-    {
-      "id": "ord9700e4",
-      "patient_id": "p1",
-      "pharmacy_id": "ph1",
-      "created_at": "2026-10-10T14:04",
-      "status": "needs_attention",
-      "payment_method": "cash",
-      "payment_status": "unpaid",
-      "fulfilment": "delivery",
-      "delivery_date": "",
-      "delivery_slot": "",
-      "patient_message": "can i get 2 months of this cuz im going away",
-      "ai_message": "need the inhaler",
-      "items": [
-        {
-          "prescription_id": "rx1",
-          "medicine_name": "Atorvastatin 20mg",
-          "quantity": 28
-        },
-        {
-          "prescription_id": "rx2",
-          "medicine_name": "Metformin 500mg",
-          "quantity": 56
-        },
-        {
-          "prescription_id": "rx3",
-          "medicine_name": "Lisinopril 10mg",
-          "quantity": 28
-        },
-        {
-          "prescription_id": "rx4",
-          "medicine_name": "Salbutamol inhaler 100mcg",
-          "quantity": 1
-        }
-      ],
-      "gp_requests": [
-        "rx5"
-      ]
     }
   ],
   "renewal_requests": [
@@ -366,11 +308,8 @@
       "requested_at": "2026-10-10T09:50",
       "previous_script": "Previous script issued 20 May 2026 for 6 months. All repeats used.",
       "note": "",
-      "status": "renewed",
-      "prescription_id": "rx6",
-      "renewed_months": 6,
-      "decided_at": "2026-10-10T13:29",
-      "decided_by": "d1"
+      "status": "pending",
+      "prescription_id": "rx6"
     },
     {
       "id": "r3",
@@ -384,19 +323,6 @@
       "note": "",
       "status": "pending",
       "prescription_id": "rx7"
-    },
-    {
-      "id": "r7edc440e",
-      "patient_id": "p1",
-      "pharmacy_id": "ph1",
-      "doctor_id": "d1",
-      "medication": "Metformin 500mg",
-      "dosage": "",
-      "reason": "last repeat used",
-      "requested_at": "2026-10-10T13:53",
-      "previous_script": "",
-      "note": "",
-      "status": "pending"
     }
   ]
 }

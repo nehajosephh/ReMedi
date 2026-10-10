@@ -31,7 +31,11 @@
 
     <div class="sticky-bottom">
       <button class="btn btn-primary" type="submit">Send order to pharmacy</button>
-      <p class="small" style="text-align:center">Pay {{ "on delivery" if delivery == "home" else "when you collect" }}. A pharmacist checks every order before it's packed.</p>
+      <p class="small" style="text-align:center">
+        {% if delivery == "home" %}Home delivery adds EUR 3.00. Once the pharmacist has checked and priced your order,
+        you'll get an invoice to pay by card before it goes out.
+        {% else %}Pay in store when you collect. We'll let you know when it's ready.{% endif %}
+      </p>
     </div>
   </form>
 </main>

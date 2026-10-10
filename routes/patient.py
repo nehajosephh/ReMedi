@@ -12,6 +12,8 @@ from services.storage import find_by, load_data, login_required, save_data
 patient_bp = Blueprint("patient", __name__, url_prefix="/patient")
 
 SCHEMES = ["Medical card", "DPS", "Private"]
+REMINDER_DAYS = 3          # remind patients this many days before their order is due
+DELIVERY_FEE_CENTS = 300   # EUR 3, must match routes/payments.py
 EIRCODE = re.compile(r"^[A-Z0-9]{3}\s?[A-Z0-9]{4}$")
 
 
@@ -150,8 +152,14 @@ def home():
     due_text = "Any time"
     if due:
         due_text = "Due now" if due <= today() else due.strftime("%a %d %b").replace(" 0", " ")
+
+    # Reminder 3 days before the monthly order is due (a real version would also text or email)
+    current = active_order(data, patient["id"])
+    days_left = (due - today()).days if due else None
+    remind = current is None and days_left is not None and days_left <= REMINDER_DAYS
     return render_template("patient/home.html", patient=patient, meds=meds, due=due_text,
-                           error=request.args.get("error"))
+                           error=request.args.get("error"), current_order=current,
+                           remind=remind, days_left=days_left)
 
 
 @patient_bp.route("/review", methods=["POST"])
@@ -216,8 +224,10 @@ def place_order():
         "created_at": now,
         # anything waiting on the GP needs the pharmacist's attention
         "status": "needs_attention" if gp_items else "pending",
-        "payment_method": "cash" if delivery else "pharmacy",
-        "payment_status": "unpaid",
+        # price isn't known until the pharmacist checks it, then they send an invoice
+        "payment_method": "card" if delivery else "in_store",
+        "payment_status": "not_invoiced",
+        "delivery_fee_cents": DELIVERY_FEE_CENTS if delivery else 0,
         "fulfilment": "delivery" if delivery else "collection",
         "delivery_date": "",
         "delivery_slot": "",
@@ -267,7 +277,10 @@ def order_status(order_id):
     gp_names = [f"{rx['drug']} {rx['strength']}" for rx in data["prescriptions"]
                 if rx["id"] in order.get("gp_requests", [])]
     return render_template("patient/order.html", patient=patient, order=order,
-                           pharmacy=pharmacy, gp_names=gp_names)
+                           pharmacy=pharmacy, gp_names=gp_names,
+                           error=request.args.get("error"),
+                           just_paid=request.args.get("paid") == "1",
+                           cancelled=request.args.get("cancelled") == "1")
 
 
 @patient_bp.route("/assist", methods=["POST"])

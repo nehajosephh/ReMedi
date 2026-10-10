@@ -1,5 +1,5 @@
-/* Shared ReMedi styles. Everyone uses these so the three portals look like one app. */
 @charset "UTF-8";
+/* Shared ReMedi styles. Everyone uses these so the three portals look like one app. */
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Source+Sans+3:wght@400;600;700&display=swap');
 
 :root {
@@ -106,7 +106,7 @@ input:focus, select:focus { outline: 3px solid #b9d4c0; border-color: var(--gree
 .med .box { width: 26px; height: 26px; border: 2px solid #b7bfb9; border-radius: 6px; background: #fff; flex: none;
             display: grid; place-items: center; color: #fff; font-size: 16px; }
 .med.on .box { background: var(--green); border-color: var(--green); }
-.med.on .box::after { content: "✓"; }
+.med.on .box::after { content: "\2713"; }
 .med:focus-within { outline: 3px solid #b9d4c0; }
 .med.blocked { background: var(--red-soft); border-color: #e8b9b4; cursor: default; }
 .warn { color: var(--red); font-size: 13px; }
@@ -138,3 +138,14 @@ textarea { width: 100%; font: inherit; padding: 12px 14px; border: 1.5px solid v
            background: #fff; resize: vertical; }
 textarea:focus { outline: 3px solid #b9d4c0; border-color: var(--green); }
 h2 label { font-size: inherit; font-weight: inherit; margin: 0; }
+.ai-result[hidden] { display: none; }
+
+/* reminders, invoice */
+.banner { display: flex; flex-direction: column; gap: 2px; background: #fff7e6; border: 1.5px solid #f0d79a;
+          border-radius: var(--radius); padding: 13px 16px; margin-bottom: 16px; color: inherit; text-decoration: none; }
+.banner span { font-size: 14px; color: var(--muted); }
+.banner-pay { background: var(--green); border-color: var(--green); color: #fff; }
+.banner-pay span { color: #e3efe6; }
+.banner-ok { background: var(--green-soft); border-color: #b9d4c0; }
+.invoice .line { display: flex; justify-content: space-between; padding: 6px 0; }
+.invoice .total { border-top: 1px solid var(--line); margin-top: 4px; padding-top: 10px; font-weight: 700; }

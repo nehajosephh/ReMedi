@@ -8,6 +8,25 @@
 
   {% if error %}<div class="alert">{{ error }}</div>{% endif %}
 
+  {% if current_order %}
+    <a class="banner {{ 'banner-pay' if current_order.payment_status == 'awaiting_payment' }}"
+       href="{{ url_for('patient.order_status', order_id=current_order.id) }}">
+      {% if current_order.payment_status == "awaiting_payment" %}
+        <strong>Your order is ready to pay</strong>
+        <span>EUR {{ "%.2f"|format(current_order.invoice.total_cents / 100) }}. Tap to pay so it can go out for delivery.</span>
+      {% elif current_order.status == "ready" %}
+        <strong>Your order is ready</strong><span>Tap to see the details.</span>
+      {% else %}
+        <strong>Order sent to the pharmacy</strong><span>Tap to check its status.</span>
+      {% endif %}
+    </a>
+  {% elif remind %}
+    <div class="banner">
+      <strong>{% if days_left <= 0 %}Your repeat order is due now{% else %}Your repeat order is due in {{ days_left }} day{{ "s" if days_left != 1 }}{% endif %}</strong>
+      <span>Check what you need this month and send it to the pharmacy.</span>
+    </div>
+  {% endif %}
+
   <form method="post" action="{{ url_for('patient.review') }}" id="order-form">
     <div class="tiles">
       <div class="tile dark">

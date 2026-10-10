@@ -19,6 +19,9 @@ try:
 except ImportError:
     print("GP section not ready yet, skipping")
 
+from routes.payments import payments_bp
+app.register_blueprint(payments_bp)   # Stripe invoices: routes/payments.py
+
 try:
     from routes.pharmacy import pharmacy_bp
     app.register_blueprint(pharmacy_bp)
@@ -26,9 +29,13 @@ except ImportError:
     print("Pharmacy section not ready yet, skipping")
 
 
-
 @app.route("/")
 def welcome():
+    # Already signed in? Go straight to your own section.
+    home_pages = {"patient": "patient.home", "doctor": "doctor.home", "pharmacy_demo": "pharmacy.dashboard"}
+    role = session.get("role")
+    if role in home_pages:
+        return redirect(url_for(home_pages[role]))
     return render_template("welcome.html")
 
 

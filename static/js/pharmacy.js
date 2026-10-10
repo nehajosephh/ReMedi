@@ -197,7 +197,7 @@ if (dataElement) {
 
                 const relatedRenewal = relatedRenewals.find(
                     renewal =>
-                        String(renewal.medication || "").toLowerCase()
+                        renewal.medication.toLowerCase()
                         === String(name).toLowerCase()
                 );
 
@@ -324,6 +324,8 @@ if (dataElement) {
                 </table>
             </div>
 
+            ${invoiceHTML(order)}
+
             <div class="dashboard-actions">
                 <button type="button"
                         class="primary-button"
@@ -352,6 +354,112 @@ if (dataElement) {
         `;
 
         attachActions(order, canApprove);
+        attachInvoice(order);
+    }
+
+    // ---------- Invoice: pharmacist prices the order, patient pays (Stripe for delivery) ----------
+    function euro(cents) {
+        return "€" + (Number(cents || 0) / 100).toFixed(2);
+    }
+
+    function paymentLabel(order) {
+        return {
+            not_invoiced: "Not invoiced yet",
+            awaiting_payment: "Invoice sent, waiting for card payment",
+            pay_in_store: "Pay in store on collection",
+            paid: `Paid ${order.paid_by || ""}`.trim()
+        }[order.payment_status] || displayStatus(order.payment_status);
+    }
+
+    function invoiceHTML(order) {
+        const inv = order.invoice;
+        const finished = ["delivered", "collected", "cancelled"].includes(order.status);
+        const deliveryFee = order.fulfilment === "delivery" ? 300 : 0;
+
+        if (!inv) {
+            if (finished) return "";
+            return `
+                <h3 class="section-title">Price and send invoice</h3>
+                <div class="detail-box">
+                    <label for="medicines-euro"><span>Prescription charge for this patient's scheme (€)</span></label>
+                    <input id="medicines-euro" type="number" min="0" step="0.01" placeholder="e.g. 4.50"
+                           style="width:100%;padding:12px;border:1px solid #c9ded0;border-radius:10px;font-size:15px;">
+                    <p class="ai-disclaimer">
+                        ${deliveryFee ? "€3.00 home delivery is added automatically. The patient pays by card before it goes out."
+                                      : "Collection order: the patient pays in store."}
+                    </p>
+                    <button type="button" class="primary-button" id="send-invoice-btn">Order checked, send invoice</button>
+                </div>`;
+        }
+        return `
+            <h3 class="section-title">Invoice</h3>
+            <div class="detail-box">
+                <span>Prescription ${euro(inv.medicines_cents)}${inv.delivery_cents ? ` + delivery ${euro(inv.delivery_cents)}` : ""}</span>
+                <strong>Total ${euro(inv.total_cents)} · ${escapeHTML(paymentLabel(order))}</strong>
+                ${order.stripe_payment_intent ? `<span style="margin-top:6px">Stripe: ${escapeHTML(order.stripe_payment_intent)}</span>` : ""}
+                ${order.payment_status === "pay_in_store"
+                    ? `<button type="button" class="secondary-button" id="paid-in-store-btn" style="margin-top:10px">Paid at counter, mark collected</button>` : ""}
+                ${order.payment_status === "paid" && order.fulfilment === "delivery" && order.status !== "delivered"
+                    ? `<button type="button" class="primary-button" id="delivered-btn" style="margin-top:10px">Delivered to patient</button>` : ""}
+            </div>`;
+    }
+
+    async function postJSON(url, body) {
+        const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body || {})
+        });
+        const result = await res.json();
+        if (!res.ok || !result.ok) throw new Error(result.error || "Something went wrong.");
+        return result;
+    }
+
+    function attachInvoice(order) {
+        const feedback = document.getElementById("action-feedback");
+        const sendButton = document.getElementById("send-invoice-btn");
+        const paidButton = document.getElementById("paid-in-store-btn");
+        const deliveredButton = document.getElementById("delivered-btn");
+
+        if (deliveredButton) {
+            deliveredButton.addEventListener("click", async () => {
+                try {
+                    await postJSON(`/payments/mark-delivered/${order.id}`);
+                    window.location.hash = order.id;
+                    window.location.reload();
+                } catch (err) {
+                    feedback.textContent = err.message;
+                }
+            });
+        }
+
+        if (sendButton) {
+            sendButton.addEventListener("click", async () => {
+                const amount = document.getElementById("medicines-euro").value;
+                if (amount === "") {
+                    feedback.textContent = "Enter the prescription charge first (0 is fine).";
+                    return;
+                }
+                try {
+                    await postJSON(`/payments/invoice/${order.id}`, { medicines_euro: amount });
+                    window.location.hash = order.id;
+                    window.location.reload();
+                } catch (err) {
+                    feedback.textContent = err.message;
+                }
+            });
+        }
+        if (paidButton) {
+            paidButton.addEventListener("click", async () => {
+                try {
+                    await postJSON(`/payments/mark-paid/${order.id}`);
+                    window.location.hash = order.id;
+                    window.location.reload();
+                } catch (err) {
+                    feedback.textContent = err.message;
+                }
+            });
+        }
     }
 
     function attachActions(order, canApprove) {
@@ -368,179 +476,14 @@ if (dataElement) {
                 "Backend pharmacist review is not connected yet.";
         });
 
-        // Open the prescription renewal form.
         renewalButton.addEventListener("click", () => {
-            const patient = getPatient(order.patient_id);
+            const relatedRenewals = getRelatedRenewals(order.patient_id);
 
-            const orderItems = Array.isArray(order.items)
-                ? order.items
-                : [];
-
-            const names = [
-                ...new Set(
-                    orderItems.map(item =>
-                        String(
-                            item.medicine_name
-                            || item.name
-                            || item.medication
-                            || ""
-                        ).trim()
-                    ).filter(Boolean)
-                )
-            ];
-
-            // Use medications from the selected order.
-            const options = names.map(name =>
-                `<option value="${escapeHTML(name)}">
-                    ${escapeHTML(name)}
-                </option>`
-            ).join("");
-
-            feedback.innerHTML = `
-                <form id="send-renewal-form"
-                      class="renewal-info"
-                      style="display:grid;gap:12px;margin-top:12px;text-align:left">
-
-                    <strong>
-                        Renewal request for
-                        ${escapeHTML(getPatientName(patient))}
-                    </strong>
-
-                    <label for="renewal-medication">
-                        Medication
-                    </label>
-
-                    ${names.length ? `
-                        <select id="renewal-medication"
-                                required
-                                style="width:100%;padding:10px;border-radius:8px">
-                            <option value="">Select medication</option>
-                            ${options}
-                        </select>
-                    ` : `
-                        <input id="renewal-medication"
-                               required
-                               maxlength="160"
-                               placeholder="Medication and strength"
-                               style="width:100%;padding:10px;border-radius:8px">
-                    `}
-
-                    <label for="renewal-reason">
-                        Reason
-                    </label>
-
-                    <select id="renewal-reason"
-                            required
-                            style="width:100%;padding:10px;border-radius:8px">
-
-                        <option value="">Select reason</option>
-
-                        <option value="script expired">
-                            Prescription expired
-                        </option>
-
-                        <option value="last repeat used">
-                            Last repeat used
-                        </option>
-
-                        <option value="patient requested renewal">
-                            Patient requested renewal
-                        </option>
-                    </select>
-
-                    <button type="submit"
-                            class="primary-button"
-                            id="submit-renewal">
-                        Submit request for GP review
-                    </button>
-
-                    <p id="renewal-result"
-                       role="status"
-                       aria-live="polite"></p>
-                </form>
-            `;
-
-            // Submit the renewal request to Flask.
-            document.getElementById("send-renewal-form")
-                .addEventListener("submit", async event => {
-
-                    event.preventDefault();
-
-                    const submitButton =
-                        document.getElementById("submit-renewal");
-
-                    const result =
-                        document.getElementById("renewal-result");
-
-                    const medication =
-                        document.getElementById("renewal-medication")
-                            .value.trim();
-
-                    const reason =
-                        document.getElementById("renewal-reason").value;
-
-                    if (!medication || !reason) return;
-
-                    // Check for an existing pending request.
-                    const alreadyPending = getRelatedRenewals(
-                        order.patient_id
-                    ).some(renewal =>
-                        renewal.status === "pending"
-                        && String(renewal.medication || "")
-                            .trim()
-                            .toLowerCase() === medication.toLowerCase()
-                    );
-
-                    if (alreadyPending) {
-                        result.textContent =
-                            "A pending renewal already exists " +
-                            "for this medication.";
-                        return;
-                    }
-
-                    submitButton.disabled = true;
-                    result.textContent = "Sending request...";
-
-                    try {
-                        const response = await fetch(
-                            "/pharmacy/request-renewal",
-                            {
-                                method: "POST",
-                                headers: {
-                                    "Content-Type": "application/json"
-                                },
-                                body: JSON.stringify({
-                                    patient_id: order.patient_id,
-                                    medication: medication,
-                                    reason: reason
-                                })
-                            }
-                        );
-
-                        const payload = await response.json();
-
-                        if (!response.ok) {
-                            result.textContent =
-                                payload.error || "Unable to submit request.";
-
-                            submitButton.disabled = false;
-                            return;
-                        }
-
-                        result.textContent =
-                            "Saved! Renewal is now pending GP review.";
-
-                        // Refresh renewal cards and summary counts.
-                        window.location.reload();
-
-                    } catch (error) {
-                        result.textContent =
-                            "Could not contact the server. Please try again.";
-
-                        submitButton.disabled = false;
-                        console.error(error);
-                    }
-                });
+            feedback.textContent = relatedRenewals.some(
+                renewal => renewal.status === "pending"
+            )
+                ? "A renewal request is already pending in the shared data. No new request was sent."
+                : "Demo only: GP request has not been sent or saved.";
         });
 
         messageButton.addEventListener("click", () => {
@@ -549,7 +492,7 @@ if (dataElement) {
         });
     }
 
-    // Existing renewal cards are informational for now.
+    // Renewal request buttons are informational for now.
     document.querySelectorAll(".renewal-demo-btn").forEach(button => {
         button.addEventListener("click", () => {
             button.textContent = "Request shown above";
@@ -557,9 +500,12 @@ if (dataElement) {
     });
 
     // Automatically select the oldest order.
+    // (or the one in the URL after a reload, e.g. /pharmacy/#ord123)
     if (orders.length > 0) {
-        selectedOrderId = orders[0].id;
+        const fromUrl = orders.find(o => o.id === window.location.hash.slice(1));
+        const first = fromUrl || orders[0];
+        selectedOrderId = first.id;
         renderOrders();
-        renderDetails(orders[0]);
+        renderDetails(first);
     }
 }
