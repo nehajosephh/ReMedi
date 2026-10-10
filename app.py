@@ -26,13 +26,9 @@ except ImportError:
     print("Pharmacy section not ready yet, skipping")
 
 
+
 @app.route("/")
 def welcome():
-    # Already signed in? Go straight to your own section.
-    home_pages = {"patient": "patient.home", "doctor": "doctor.home", "pharmacy_demo": "pharmacy.dashboard"}
-    role = session.get("role")
-    if role in home_pages:
-        return redirect(url_for(home_pages[role]))
     return render_template("welcome.html")
 
 
