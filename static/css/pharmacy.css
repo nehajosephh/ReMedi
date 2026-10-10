@@ -1,0 +1,586 @@
+
+/* ==========================================
+   REMEDI - SHARED PHARMACY STYLES
+   ========================================== */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #1c2922;
+}
+
+/* ==========================================
+   PHARMACIST LOGIN
+   ========================================== */
+
+body:not(.dashboard-body) {
+    background: #f4f8f5;
+}
+
+.login-page {
+    min-height: 100vh;
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 24px 22px 28px;
+
+    display: flex;
+    flex-direction: column;
+
+    background: #f5f9f6;
+    border: 1px solid #dce7df;
+}
+
+.login-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.back-button {
+    width: 46px;
+    height: 46px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: white;
+    border: 1px solid #d9e6de;
+    border-radius: 50%;
+
+    color: #27382e;
+    font-size: 32px;
+    text-decoration: none;
+}
+
+.brand {
+    font-family: Georgia, serif;
+    font-size: 22px;
+    font-weight: bold;
+    color: #2e805b;
+}
+
+.staff-badge {
+    margin-left: auto;
+    padding: 9px 12px;
+
+    background: #e0f0e5;
+    border-radius: 10px;
+
+    font-size: 12px;
+    font-weight: bold;
+    color: #276c4c;
+}
+
+.login-content {
+    margin-top: 45px;
+}
+
+.login-content h1 {
+    margin: 0 0 12px;
+    font-size: 28px;
+    font-weight: 750;
+    letter-spacing: -0.6px;
+}
+
+.subtitle {
+    margin: 0 0 34px;
+    color: #617068;
+    font-size: 15px;
+    line-height: 1.55;
+}
+
+.form-group {
+    margin-bottom: 21px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 10px;
+
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    height: 52px;
+    padding: 0 15px;
+
+    background: white;
+    border: 1.5px solid #cadfd1;
+    border-radius: 13px;
+
+    font-size: 15px;
+    color: #27332b;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #30835c;
+}
+
+.sign-in-button {
+    width: 100%;
+    height: 57px;
+    margin-top: 5px;
+
+    background: #2e805b;
+    color: white;
+
+    border: none;
+    border-radius: 30px;
+
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.sign-in-button:hover {
+    background: #256e4e;
+}
+
+.verification-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+
+    margin-top: 20px;
+    padding: 15px;
+
+    background: white;
+    border: 1px solid #d7e7dd;
+    border-radius: 15px;
+}
+
+.verification-notice p {
+    margin: 0;
+    color: #607067;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.shield-icon {
+    color: #2e805b;
+    font-size: 24px;
+}
+
+.login-footer {
+    margin-top: auto;
+    padding-top: 40px;
+
+    text-align: center;
+    color: #66766c;
+    font-size: 12px;
+}
+
+.login-footer a {
+    color: #2e805b;
+    text-decoration: underline;
+    font-weight: bold;
+}
+
+/* ==========================================
+   PHARMACIST DASHBOARD
+   ========================================== */
+
+.dashboard-body {
+    background: #eaece9;
+    color: #202b24;
+}
+
+.pharmacy-dashboard {
+    min-height: calc(100vh - 28px);
+    margin: 14px 24px;
+
+    background: #f5f9f6;
+    border: 1px solid #d9e4dc;
+    box-shadow: 0 2px 12px #00000012;
+}
+
+/* HEADER */
+
+.dashboard-header {
+    min-height: 74px;
+    padding: 15px 24px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+
+    background: white;
+    border-bottom: 1px solid #e0e8e2;
+}
+
+.header-left,
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.medical-cross {
+    color: #2d8059;
+    font-size: 29px;
+}
+
+.dashboard-brand {
+    font-family: Georgia, serif;
+    font-size: 23px;
+    font-weight: bold;
+    color: #2e805b;
+}
+
+.header-divider {
+    width: 1px;
+    height: 22px;
+    background: #d3ddd6;
+}
+
+.pharmacy-name,
+.staff-name {
+    font-size: 14px;
+    color: #4e5e54;
+}
+
+.verified-badge {
+    padding: 9px 12px;
+    border-radius: 9px;
+
+    background: #e1f1e7;
+    color: #286c4b;
+
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.sign-out {
+    color: #2e805b;
+    font-size: 14px;
+    text-decoration: underline;
+}
+
+/* MAIN */
+
+.dashboard-main {
+    padding: 24px;
+}
+
+/* SUMMARY CARDS */
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.summary-card {
+    min-height: 98px;
+    padding: 17px 16px;
+
+    border: 1px solid #d6e3da;
+    border-radius: 16px;
+    background: white;
+}
+
+.summary-card span {
+    display: block;
+    font-size: 13px;
+    font-weight: bold;
+    color: #6a786f;
+}
+
+.summary-card strong {
+    display: block;
+    margin-top: 12px;
+    font-size: 26px;
+    line-height: 1;
+}
+
+.summary-primary {
+    background: #2f805b;
+    color: white;
+    border-color: #2f805b;
+}
+
+.summary-primary span {
+    color: #e7f5eb;
+}
+
+.summary-attention {
+    background: #fff6f3;
+    border-color: #f1bcae;
+}
+
+.summary-attention span {
+    color: #bc5b48;
+}
+
+/* TWO-COLUMN LAYOUT */
+
+.dashboard-columns {
+    display: grid;
+    grid-template-columns: 28% 1fr;
+    gap: 20px;
+    align-items: start;
+}
+
+/* ORDERS PANEL */
+
+.orders-panel {
+    overflow: hidden;
+    border: 1px solid #d9e5dc;
+    border-radius: 16px;
+    background: white;
+}
+
+.orders-panel h2 {
+    margin: 0;
+    padding: 18px 16px;
+
+    font-size: 16px;
+    border-bottom: 1px solid #e1e9e3;
+}
+
+.order-item {
+    display: block;
+    width: 100%;
+    padding: 17px 16px;
+
+    text-align: left;
+    border: 0;
+    border-bottom: 1px solid #e3ebe5;
+
+    background: white;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+}
+
+.order-item:last-child {
+    border-bottom: 0;
+}
+
+.order-item.selected {
+    background: #e9f4ed;
+    border-left: 4px solid #2e805b;
+}
+
+.order-item:hover {
+    background: #f0f7f2;
+}
+
+.order-title {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    align-items: center;
+}
+
+.order-title strong {
+    font-size: 15px;
+}
+
+.order-title span,
+.order-item p,
+.order-item > span {
+    font-size: 13px;
+    color: #607067;
+}
+
+.order-item p {
+    margin: 9px 0 7px;
+}
+
+.order-item .order-warning {
+    color: #c64e3b;
+}
+
+/* PATIENT DETAILS */
+
+.order-details {
+    min-width: 0;
+}
+
+.patient-card,
+.ai-summary,
+.medicine-table-wrapper {
+    border: 1px solid #d8e4dc;
+    border-radius: 16px;
+    background: white;
+}
+
+.patient-card {
+    padding: 21px;
+    margin-bottom: 15px;
+}
+
+.patient-card h2 {
+    margin: 0 0 9px;
+    font-size: 21px;
+}
+
+.patient-card p {
+    margin: 0;
+    color: #64736a;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* AI SUMMARY */
+
+.ai-summary {
+    padding: 19px 20px;
+    margin-bottom: 15px;
+
+    background: #e9f4ed;
+    border: 1.5px solid #67a584;
+}
+
+.ai-summary h3 {
+    margin: 0 0 10px;
+    font-size: 13px;
+    color: #276d4c;
+}
+
+.ai-summary p {
+    margin: 0 0 8px;
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+.ai-summary small {
+    color: #65776b;
+    font-size: 13px;
+}
+
+/* MEDICINE TABLE */
+
+.medicine-table-wrapper {
+    overflow-x: auto;
+}
+
+.medicine-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.medicine-table th,
+.medicine-table td {
+    padding: 16px 19px;
+    font-size: 13px;
+    border-bottom: 1px solid #e4ebe6;
+}
+
+.medicine-table th {
+    color: #59685f;
+    font-weight: bold;
+}
+
+.medicine-table tr:last-child td {
+    border-bottom: 0;
+}
+
+.warning-text {
+    color: #c44c38;
+}
+
+/* ACTION BUTTONS */
+
+.dashboard-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.dashboard-actions button {
+    min-height: 50px;
+    padding: 0 20px;
+
+    border-radius: 28px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.action-primary {
+    background: #2e805b;
+    color: white;
+    border: 2px solid #2e805b;
+}
+
+.action-outline {
+    background: white;
+    color: #2e805b;
+    border: 2px solid #2e805b;
+}
+
+.action-neutral {
+    background: white;
+    color: #3d4b42;
+    border: 1px solid #cbdcd0;
+}
+
+.action-feedback {
+    margin-top: 12px;
+    color: #276d4c;
+    font-size: 13px;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 900px) {
+    .dashboard-columns {
+        grid-template-columns: 1fr;
+    }
+
+    .summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .dashboard-header {
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 550px) {
+    .pharmacy-dashboard {
+        margin: 0;
+        min-height: 100vh;
+    }
+
+    .dashboard-main {
+        padding: 14px;
+    }
+
+    .dashboard-header {
+        padding: 14px;
+    }
+
+    .summary-grid {
+        gap: 8px;
+    }
+
+    .summary-card {
+        padding: 14px;
+    }
+
+    .summary-card strong {
+        font-size: 23px;
+    }
+
+    .pharmacy-name,
+    .header-divider {
+        display: none;
+    }
+}
