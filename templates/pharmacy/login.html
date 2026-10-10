@@ -1,107 +1,157 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Pharmacist Sign In | ReMedi</title>
 
     <link rel="stylesheet"
           href="{{ url_for('static', filename='css/pharmacy.css') }}">
+
+    <style>
+        .remedi-login {
+            max-width: 390px;
+            min-height: 100vh;
+            margin: auto;
+            padding: 28px 22px;
+            background: #f6faf7;
+            color: #20352a;
+        }
+
+        .login-brand {
+            color: #2e805b;
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 55px;
+        }
+
+        .remedi-login h1 {
+            font-size: 26px;
+            margin-bottom: 10px;
+        }
+
+        .login-description {
+            color: #63746a;
+            line-height: 1.6;
+            margin-bottom: 32px;
+        }
+
+        .remedi-login label {
+            display: block;
+            font-weight: 700;
+            font-size: 14px;
+            margin: 20px 0 8px;
+        }
+
+        .remedi-login input,
+        .remedi-login select {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #c9ded0;
+            border-radius: 12px;
+            background: white;
+            font-size: 15px;
+        }
+
+        .login-button {
+            width: 100%;
+            background: #2e805b;
+            color: white;
+            border: 0;
+            border-radius: 28px;
+            padding: 16px;
+            font-weight: 700;
+            margin-top: 28px;
+            cursor: pointer;
+        }
+
+        .demo-notice {
+            margin-top: 20px;
+            padding: 16px;
+            border: 1px solid #d7e7dc;
+            background: white;
+            border-radius: 14px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .login-error {
+            color: #9c3030;
+            margin-top: 14px;
+        }
+    </style>
 </head>
-<body>
 
-    <div class="login-page">
+<body style="margin:0; background:#eaf0eb;">
 
-        <!-- Header -->
-        <header class="login-header">
-            <a href="/" class="back-button" aria-label="Go back">
-                &#8249;
-            </a>
+<main class="remedi-login">
 
-            <span class="brand">ReMedi</span>
+    <div class="login-brand">✚ ReMedi</div>
 
-            <span class="staff-badge">Pharmacy staff</span>
-        </header>
+    <h1>Pharmacist sign in</h1>
 
-        <!-- Main content -->
-        <main class="login-content">
+    <p class="login-description">
+        Access your pharmacy's patients, orders and
+        prescription renewal requests.
+    </p>
 
-            <h1>Pharmacist sign in</h1>
+    {% if error %}
+        <p class="login-error">{{ error }}</p>
+    {% endif %}
 
-            <p class="subtitle">
-                We check your registration before you can see any
-                patient orders.
-            </p>
+    <form method="POST"
+          action="{{ url_for('pharmacy.login') }}">
 
-            <form method="POST"
-                  action="{{ url_for('pharmacy.login') }}">
+        <label for="psi_number">PSI registration number</label>
+        <input
+            id="psi_number"
+            name="psi_number"
+            placeholder="Enter demo PSI number"
+            required
+        >
 
-                <div class="form-group">
-                    <label for="psi">
-                        PSI registration number
-                    </label>
+        <label for="pharmacy_id">Pharmacy</label>
 
-                    <input
-                        type="text"
-                        id="psi"
-                        name="psi"
-                        placeholder="e.g. 12345"
-                        required
-                    >
-                </div>
+        <select id="pharmacy_id"
+                name="pharmacy_id"
+                required>
 
-                <div class="form-group">
-                    <label for="pharmacy">
-                        Pharmacy
-                    </label>
+            <option value="">Select your pharmacy</option>
 
-                    <select id="pharmacy" name="pharmacy" required>
-                        <option value="drumcondra">
-                            [PHARMACY NAME], Drumcondra
-                        </option>
-                    </select>
-                </div>
+            {% for pharmacy in pharmacies %}
+                <option value="{{ pharmacy.id }}">
+                    {{ pharmacy.name }} · {{ pharmacy.address }}
+                </option>
+            {% endfor %}
 
-                <div class="form-group">
-                    <label for="password">
-                        Password
-                    </label>
+        </select>
 
-                    <input
-                        type="password"
-                        id="password"
-                        name="password"
-                        placeholder="Your password"
-                        required
-                    >
-                </div>
+        <label for="password">Password</label>
 
-                <button type="submit" class="sign-in-button">
-                    Verify and sign in
-                </button>
+        <input
+            id="password"
+            type="password"
+            name="password"
+            placeholder="Demo password"
+            required
+        >
 
-            </form>
+        <button class="login-button" type="submit">
+            Sign in
+        </button>
 
-            <!-- Information notice -->
-            <div class="verification-notice">
-                <span class="shield-icon">♢</span>
+    </form>
 
-                <p>
-                    Your number is checked against the PSI register
-                    and must match the pharmacy you choose.
-                </p>
-            </div>
-
-        </main>
-
-        <!-- Footer -->
-        <footer class="login-footer">
-            Not a pharmacist?
-            <a href="/">Go back</a>
-        </footer>
-
+    <div class="demo-notice">
+        <strong>HackUCD demo access</strong>
+        <p>
+            This uses fictional pharmacist records.
+            Live PSI registration verification is not enabled.
+        </p>
     </div>
+
+</main>
 
 </body>
 </html>

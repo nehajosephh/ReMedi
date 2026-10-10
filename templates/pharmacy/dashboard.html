@@ -4,238 +4,214 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ReMedi | Pharmacist Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/pharmacy.css') }}">
+    <title>Pharmacy Dashboard | ReMedi</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/pharmacy.css') }}">
+    <script defer
+            src="{{ url_for('static', filename='js/pharmacy.js') }}"></script>
 </head>
 
 <body class="dashboard-body">
 
-<div class="pharmacy-dashboard">
+<div class="dashboard-shell">
 
-    <!-- HEADER -->
     <header class="dashboard-header">
-
-        <div class="header-left">
-            <span class="medical-cross">✚</span>
-            <span class="dashboard-brand">ReMedi</span>
-            <span class="header-divider"></span>
-            <span class="pharmacy-name">
-                Greenfield Pharmacy, Drumcondra
-            </span>
+        <div class="header-brand">
+            <div class="brand-logo">✚ ReMedi</div>
+            <div class="brand-location">
+                <strong>{{ pharmacy.name }}</strong>
+                <span>{{ pharmacy.address }}</span>
+            </div>
         </div>
 
-        <div class="header-right">
-            <span class="verified-badge">✓ Demo staff</span>
-            <span class="staff-name">Aoife Brennan</span>
-            <a href="{{ url_for('pharmacy.login') }}" class="sign-out">
+        <div class="header-account">
+            <span class="staff-badge">Demo pharmacy staff</span>
+            <span class="staff-name">{{ pharmacist.name }}</span>
+            <a class="sign-out" href="{{ url_for('logout') }}">
                 Sign out
             </a>
         </div>
-
     </header>
 
     <main class="dashboard-main">
 
-        <!-- SUMMARY CARDS -->
-        <section class="summary-grid">
+        <div class="page-heading">
+            <div>
+                <h1>Pharmacist dashboard</h1>
+                <p>Review incoming orders and prescription requests.</p>
+            </div>
+            <span class="live-label">
+                <span class="live-dot"></span>
+                Shared demo data
+            </span>
+        </div>
 
+        {% set new_orders = orders
+            | selectattr('status', 'equalto', 'pending') | list %}
+
+        {% set attention_orders = orders
+            | selectattr('status', 'equalto', 'needs_attention') | list %}
+
+        {% set ready_orders = orders
+            | selectattr('status', 'equalto', 'ready') | list %}
+
+        <section class="summary-grid">
             <div class="summary-card summary-primary">
-                <span>New orders</span>
-                <strong>12</strong>
+                <span class="summary-label">New orders</span>
+                <strong class="summary-number">
+                    {{ new_orders | length }}
+                </strong>
+                <span class="summary-caption">Awaiting review</span>
             </div>
 
             <div class="summary-card summary-attention">
-                <span>Needs attention</span>
-                <strong>3</strong>
+                <span class="summary-label">Needs attention</span>
+                <strong class="summary-number">
+                    {{ attention_orders | length }}
+                </strong>
+                <span class="summary-caption">Orders requiring review</span>
             </div>
 
             <div class="summary-card">
-                <span>Waiting on GP</span>
-                <strong>2</strong>
+                <span class="summary-label">Waiting on GP</span>
+                <strong class="summary-number">
+                    {{ pending_renewals }}
+                </strong>
+                <span class="summary-caption">Pending renewal requests</span>
             </div>
 
             <div class="summary-card">
-                <span>Ready for driver</span>
-                <strong>7</strong>
+                <span class="summary-label">Ready for collection / driver</span>
+                <strong class="summary-number">
+                    {{ ready_orders | length }}
+                </strong>
+                <span class="summary-caption">Ready orders</span>
             </div>
-
         </section>
 
-        <!-- MAIN TWO-COLUMN LAYOUT -->
-        <section class="dashboard-columns">
+        <div class="dashboard-columns">
 
-            <!-- LEFT: ORDERS -->
-            <aside class="orders-panel">
-
-                <h2>Orders, oldest first</h2>
-
-                <button class="order-item selected" data-order="mary">
-                    <div class="order-title">
-                        <strong>Mary O'Sullivan</strong>
-                        <span>09:12</span>
+            <!-- LEFT: ORDER QUEUE -->
+            <section class="panel orders-panel">
+                <div class="panel-heading">
+                    <div>
+                        <h2>Orders, oldest first</h2>
+                        <p>Orders assigned to your pharmacy</p>
                     </div>
-
-                    <p>3 items, delivery Thu</p>
-
-                    <span class="order-warning">
-                        Changed vs last month, script expired
+                    <span class="count-pill">
+                        {{ orders | length }}
                     </span>
-                </button>
+                </div>
 
-                <button class="order-item" data-order="patrick">
-                    <div class="order-title">
-                        <strong>Patrick Murphy</strong>
-                        <span>09:31</span>
+                <div id="orders-list" class="orders-list">
+                    {% if not orders %}
+                        <div class="empty-state">
+                            <strong>No orders yet</strong>
+                            <p>Patient orders will appear here.</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="queue-footer">
+                    <span class="small-dot"></span>
+                    Data refreshes when you reload this page
+                </div>
+            </section>
+
+            <!-- RIGHT: SELECTED ORDER -->
+            <section class="panel details-panel">
+
+                <div id="order-details">
+
+                    <div class="empty-state">
+                        <strong>Select an order</strong>
+                        <p>
+                            Choose a patient order to review
+                            prescription and delivery details.
+                        </p>
                     </div>
-
-                    <p>5 items, collect</p>
-                    <span>Same as last month</span>
-                </button>
-
-                <button class="order-item" data-order="brid">
-                    <div class="order-title">
-                        <strong>Bríd Gallagher</strong>
-                        <span>09:44</span>
-                    </div>
-
-                    <p>2 items, delivery Fri</p>
-
-                    <span class="order-warning">
-                        Last repeat on script
-                    </span>
-                </button>
-
-                <button class="order-item" data-order="sean">
-                    <div class="order-title">
-                        <strong>Seán O'Connor</strong>
-                        <span>10:02</span>
-                    </div>
-
-                    <p>1 item, delivery Thu</p>
-
-                    <span class="order-warning">
-                        Ordered 9 days early
-                    </span>
-                </button>
-
-            </aside>
-
-            <!-- RIGHT: PATIENT DETAILS -->
-            <div class="order-details">
-
-                <section class="patient-card">
-
-                    <h2 id="patient-name">
-                        Mary O'Sullivan
-                    </h2>
-
-                    <p id="patient-info">
-                        Medical card. Delivery Thu 16 Oct, afternoon.
-                        GP: Glasnevin Family Practice, Glasnevin.
-                    </p>
-
-                </section>
-
-                <!-- AI SUMMARY -->
-                <section class="ai-summary">
-
-                    <h3>
-                        AI summary of the patient's request
-                    </h3>
-
-                    <p id="ai-text">
-                        Patient typed "same as last month but no inhaler".
-                        Matched to 3 items. Salbutamol removed.
-                        Nothing added.
-                    </p>
-
-                    <small>
-                        Check the list below. The summary can be wrong.
-                    </small>
-
-                </section>
-
-                <!-- MEDICINE COMPARISON -->
-                <section class="medicine-table-wrapper">
-
-                    <table class="medicine-table">
-
-                        <thead>
-                            <tr>
-                                <th>Item</th>
-                                <th>Last month</th>
-                                <th>This month</th>
-                                <th>Script</th>
-                            </tr>
-                        </thead>
-
-                        <tbody id="medicine-table-body">
-
-                            <tr>
-                                <td>Atorvastatin 20mg</td>
-                                <td>28</td>
-                                <td>28</td>
-                                <td>3 of 6 left</td>
-                            </tr>
-
-                            <tr>
-                                <td>Metformin 500mg</td>
-                                <td>56</td>
-                                <td>56</td>
-                                <td>3 of 6 left</td>
-                            </tr>
-
-                            <tr>
-                                <td>Salbutamol 100mcg</td>
-                                <td>1</td>
-                                <td class="warning-text">Removed</td>
-                                <td>2 of 6 left</td>
-                            </tr>
-
-                            <tr>
-                                <td>Amlodipine 5mg</td>
-                                <td>28</td>
-                                <td class="warning-text">Wanted</td>
-                                <td class="warning-text">Expired 2 Oct</td>
-                            </tr>
-
-                        </tbody>
-
-                    </table>
-
-                </section>
-
-                <!-- ACTION BUTTONS -->
-                <div class="dashboard-actions">
-
-                    <button class="action-primary" id="approve-btn">
-                        Approve and pack
-                    </button>
-
-                    <button class="action-outline" id="renewal-btn">
-                        Send renewal request to GP
-                    </button>
-
-                    <button class="action-neutral" id="message-btn">
-                        Message patient
-                    </button>
 
                 </div>
 
-                <p id="action-feedback"
-                   class="action-feedback"
-                   role="status"
-                   aria-live="polite"></p>
+            </section>
+        </div>
 
+        <!-- RENEWAL REQUESTS -->
+        <section class="panel renewal-panel">
+
+            <div class="panel-heading">
+                <div>
+                    <h2>Prescription renewal requests</h2>
+                    <p>Requests linked to {{ pharmacy.name }}</p>
+                </div>
+
+                <span class="count-pill">
+                    {{ renewals | length }}
+                </span>
             </div>
 
+            <div class="renewal-grid">
+                {% for renewal in renewals %}
+                    <article class="renewal-card">
+                        <div class="renewal-top">
+                            <div>
+                                <strong>
+                                    {{ renewal.patient.get('first_name', 'Unknown') }}
+                                    {{ renewal.patient.get('last_name', 'patient') }}
+                                </strong>
+                                <p>{{ renewal.medication }}</p>
+                            </div>
+
+                            <span class="status-pill status-warning">
+                                {{ renewal.status | replace('_', ' ') | title }}
+                            </span>
+                        </div>
+
+                        <div class="renewal-info">
+                            <div>
+                                <span>Reason</span>
+                                <strong>{{ renewal.reason }}</strong>
+                            </div>
+
+                            <div>
+                                <span>Previous prescription</span>
+                                <p>{{ renewal.previous_script }}</p>
+                            </div>
+
+                            {% if renewal.note %}
+                                <div>
+                                    <span>Patient note</span>
+                                    <p>{{ renewal.note }}</p>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <button type="button"
+                                class="secondary-button renewal-demo-btn">
+                            View request
+                        </button>
+                    </article>
+                {% else %}
+                    <div class="empty-state">
+                        No renewal requests for this pharmacy.
+                    </div>
+                {% endfor %}
+            </div>
         </section>
 
     </main>
-
 </div>
 
-<script src="{{ url_for('static', filename='js/pharmacy.js') }}"></script>
+<!-- Flask provides the current pharmacy's shared JSON records. -->
+<script id="pharmacy-data" type="application/json">
+{{ {
+    "orders": orders,
+    "patients": patients,
+    "renewals": renewals,
+    "doctors": doctor_lookup,
+    "pharmacy": pharmacy
+} | tojson }}
+</script>
 
 </body>
 </html>

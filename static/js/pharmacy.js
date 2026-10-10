@@ -1,155 +1,400 @@
 
-const orders = {
+/* =========================================
+   REMEDI PHARMACY DASHBOARD
+   Data supplied by Flask from data.json
+   ========================================= */
 
-    mary: {
-        name: "Mary O'Sullivan",
+const dataElement = document.getElementById("pharmacy-data");
 
-        info: "Medical card. Delivery Thu 16 Oct, afternoon. GP: Glasnevin Family Practice, Glasnevin.",
+if (dataElement) {
+    const pharmacyData = JSON.parse(dataElement.textContent);
 
-        summary: 'Patient typed "same as last month but no inhaler". Matched to 3 items. Salbutamol removed. Nothing added.',
+    const orders = pharmacyData.orders || [];
+    const patients = pharmacyData.patients || [];
+    const renewals = pharmacyData.renewals || [];
+    const doctors = pharmacyData.doctors || {};
 
-        medicines: [
-            ["Atorvastatin 20mg", "28", "28", "3 of 6 left"],
-            ["Metformin 500mg", "56", "56", "3 of 6 left"],
-            ["Salbutamol 100mcg", "1", "Removed", "2 of 6 left"],
-            ["Amlodipine 5mg", "28", "Wanted", "Expired 2 Oct"]
-        ]
-    },
+    const ordersList = document.getElementById("orders-list");
+    const detailsPanel = document.getElementById("order-details");
 
-    patrick: {
-        name: "Patrick Murphy",
+    let selectedOrderId = null;
 
-        info: "Collection requested. GP: Glasnevin Family Practice.",
-
-        summary: "Patient requested the same medicines as last month. No changes identified in this fictional request.",
-
-        medicines: [
-            ["Demo Medicine A", "28", "28", "2 of 6 left"],
-            ["Demo Medicine B", "30", "30", "3 of 6 left"]
-        ]
-    },
-
-    brid: {
-        name: "Bríd Gallagher",
-
-        info: "Delivery requested for Friday. GP: Glasnevin Family Practice.",
-
-        summary: "Patient requested a repeat. The prescription is on its final authorised repeat in this fictional record.",
-
-        medicines: [
-            ["Demo Medicine C", "28", "28", "Last repeat"]
-        ]
-    },
-
-    sean: {
-        name: "Seán O'Connor",
-
-        info: "Delivery requested for Thursday. GP: Glasnevin Family Practice.",
-
-        summary: "This fictional request was submitted earlier than the previous schedule. Pharmacist review required.",
-
-        medicines: [
-            ["Demo Medicine D", "28", "28", "Review required"]
-        ]
+    // Escape user-provided text before inserting into HTML.
+    function escapeHTML(value) {
+        return String(value ?? "").replace(/[&<>"']/g, char => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        }[char]));
     }
-};
 
+    function displayStatus(status) {
+        return String(status || "Unknown")
+            .replace(/_/g, " ")
+            .replace(/\b\w/g, letter => letter.toUpperCase());
+    }
 
-// Currently selected patient
-let selectedOrder = "mary";
+    function statusClass(status) {
+        if (["needs_attention", "expired", "pending"].includes(status)) {
+            return "status-warning";
+        }
 
+        if (["ready", "approved", "completed"].includes(status)) {
+            return "status-success";
+        }
 
-// SWITCH BETWEEN PATIENT ORDERS
-document.querySelectorAll(".order-item").forEach(button => {
+        return "status-neutral";
+    }
 
-    button.addEventListener("click", () => {
+    function getPatient(patientId) {
+        return patients.find(patient => patient.id === patientId) || {};
+    }
 
-        selectedOrder = button.dataset.order;
+    function getDoctor(doctorId) {
+        return doctors[doctorId] || {};
+    }
 
-        const order = orders[selectedOrder];
+    function getPatientName(patient) {
+        if (!patient.first_name) {
+            return "Unknown patient";
+        }
 
-        // Update selected appearance
-        document.querySelectorAll(".order-item").forEach(item => {
-            item.classList.remove("selected");
+        return `${patient.first_name} ${patient.last_name || ""}`.trim();
+    }
+
+    function formatDate(dateValue) {
+        if (!dateValue) return "Not specified";
+
+        const date = new Date(dateValue);
+
+        if (Number.isNaN(date.getTime())) {
+            return String(dateValue);
+        }
+
+        return date.toLocaleDateString("en-IE", {
+            day: "numeric",
+            month: "short",
+            year: "numeric"
         });
+    }
 
-        button.classList.add("selected");
+    function formatTime(dateValue) {
+        if (!dateValue) return "";
 
-        // Update patient information
-        document.getElementById("patient-name").textContent =
-            order.name;
+        const match = String(dateValue).match(/T(\d{2}:\d{2})/);
+        return match ? match[1] : "";
+    }
 
-        document.getElementById("patient-info").textContent =
-            order.info;
+    function getRelatedRenewals(patientId) {
+        return renewals.filter(
+            renewal => renewal.patient_id === patientId
+        );
+    }
 
-        document.getElementById("ai-text").textContent =
-            order.summary;
+    // Orders are displayed chronologically.
+    orders.sort((a, b) =>
+        String(a.created_at || "").localeCompare(
+            String(b.created_at || "")
+        )
+    );
 
-        // Update medicine table
-        const tableBody =
-            document.getElementById("medicine-table-body");
+    function renderOrders() {
+        if (!ordersList || orders.length === 0) return;
 
-        tableBody.innerHTML = "";
+        ordersList.innerHTML = "";
 
-        order.medicines.forEach(medicine => {
+        orders.forEach(order => {
+            const patient = getPatient(order.patient_id);
+            const name = getPatientName(patient);
 
-            const row = document.createElement("tr");
+            const button = document.createElement("button");
+            button.type = "button";
 
-            medicine.forEach(value => {
+            button.className = "order-item";
 
-                const cell = document.createElement("td");
+            if (order.id === selectedOrderId) {
+                button.classList.add("active");
+            }
 
-                cell.textContent = value;
+            button.innerHTML = `
+                <div class="order-top">
+                    <strong>${escapeHTML(name)}</strong>
+                    <span class="order-time">
+                        ${escapeHTML(formatTime(order.created_at))}
+                    </span>
+                </div>
 
-                if (
-                    value === "Removed" ||
-                    value === "Wanted" ||
-                    value.startsWith("Expired")
-                ) {
-                    cell.classList.add("warning-text");
-                }
+                <p class="order-subtitle">
+                    ${escapeHTML(patient.scheme || "Patient order")}
+                    · ${escapeHTML(displayStatus(order.fulfilment))}
+                </p>
 
-                row.appendChild(cell);
+                <div class="order-bottom">
+                    <span class="status-pill ${statusClass(order.status)}">
+                        ${escapeHTML(displayStatus(order.status))}
+                    </span>
+
+                    <small>${escapeHTML(order.id)}</small>
+                </div>
+            `;
+
+            button.addEventListener("click", () => {
+                selectedOrderId = order.id;
+                renderOrders();
+                renderDetails(order);
             });
 
-            tableBody.appendChild(row);
+            ordersList.appendChild(button);
+        });
+    }
+
+    function renderDetails(order) {
+        if (!detailsPanel) return;
+
+        const patient = getPatient(order.patient_id);
+        const doctor = getDoctor(patient.doctor_id);
+        const relatedRenewals = getRelatedRenewals(patient.id);
+
+        const orderItems = Array.isArray(order.items)
+            ? order.items
+            : [];
+
+        const hasRenewal = relatedRenewals.some(
+            renewal => renewal.status === "pending"
+        );
+
+        const hasAttention = order.status === "needs_attention";
+
+        // No automatic approval of flagged orders.
+        const canApprove = !hasAttention
+            && !hasRenewal
+            && order.status === "pending"
+            && orderItems.length > 0;
+
+        const renewalWarning = relatedRenewals.length
+            ? relatedRenewals.map(renewal => `
+                <div class="warning-banner">
+                    <strong>Prescription renewal:</strong>
+                    ${escapeHTML(renewal.medication)}
+                    <br>
+                    Reason: ${escapeHTML(renewal.reason)}
+                    <br>
+                    Status: ${escapeHTML(displayStatus(renewal.status))}
+                </div>
+            `).join("")
+            : "";
+
+        const itemsHTML = orderItems.length
+            ? orderItems.map(item => {
+                const name = item.medicine_name
+                    || item.name
+                    || item.medication
+                    || "Unknown medication";
+
+                const quantity = item.quantity ?? "Not specified";
+
+                const relatedRenewal = relatedRenewals.find(
+                    renewal =>
+                        renewal.medication.toLowerCase()
+                        === String(name).toLowerCase()
+                );
+
+                const medicationStatus = relatedRenewal
+                    ? "Renewal requested"
+                    : "Requires pharmacist review";
+
+                return `
+                    <tr>
+                        <td>${escapeHTML(name)}</td>
+                        <td>${escapeHTML(quantity)}</td>
+                        <td>
+                            <span class="status-pill ${
+                                relatedRenewal
+                                    ? "status-warning"
+                                    : "status-neutral"
+                            }">
+                                ${escapeHTML(medicationStatus)}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            }).join("")
+            : `
+                <tr>
+                    <td colspan="3">
+                        No medication items recorded.
+                    </td>
+                </tr>
+            `;
+
+        const patientMessage = order.patient_message
+            ? escapeHTML(order.patient_message)
+            : "No patient message provided.";
+
+        detailsPanel.innerHTML = `
+            <div class="patient-heading">
+                <div>
+                    <h2>${escapeHTML(getPatientName(patient))}</h2>
+                    <p>
+                        Order ${escapeHTML(order.id)}
+                        · ${escapeHTML(formatDate(order.created_at))}
+                    </p>
+                </div>
+
+                <span class="status-pill ${statusClass(order.status)}">
+                    ${escapeHTML(displayStatus(order.status))}
+                </span>
+            </div>
+
+            <div class="detail-grid">
+                <div class="detail-box">
+                    <span>Payment scheme</span>
+                    <strong>
+                        ${escapeHTML(patient.scheme || "Not specified")}
+                    </strong>
+                </div>
+
+                <div class="detail-box">
+                    <span>Delivery / collection</span>
+                    <strong>
+                        ${escapeHTML(displayStatus(order.fulfilment))}
+                    </strong>
+                </div>
+
+                <div class="detail-box">
+                    <span>Requested date</span>
+                    <strong>
+                        ${escapeHTML(formatDate(order.delivery_date))}
+                    </strong>
+                </div>
+
+                <div class="detail-box">
+                    <span>Preferred time</span>
+                    <strong>
+                        ${escapeHTML(displayStatus(order.delivery_slot))}
+                    </strong>
+                </div>
+
+                <div class="detail-box">
+                    <span>GP</span>
+                    <strong>
+                        ${escapeHTML(doctor.name || "Not specified")}
+                    </strong>
+                </div>
+
+                <div class="detail-box">
+                    <span>GP practice</span>
+                    <strong>
+                        ${escapeHTML(doctor.practice || "Not specified")}
+                    </strong>
+                </div>
+            </div>
+
+            <h3 class="section-title">Patient request</h3>
+
+            <div class="ai-summary">
+                <strong>Original patient message</strong>
+                <p>${patientMessage}</p>
+            </div>
+
+            <p class="ai-disclaimer">
+                AI interpretation is not connected yet.
+                Always review the original request.
+            </p>
+
+            ${renewalWarning}
+
+            <h3 class="section-title">Medication review</h3>
+
+            <div class="table-wrapper">
+                <table class="medicine-table">
+                    <thead>
+                        <tr>
+                            <th>Medication</th>
+                            <th>Requested quantity</th>
+                            <th>Review status</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        ${itemsHTML}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="dashboard-actions">
+                <button type="button"
+                        class="primary-button"
+                        id="approve-btn"
+                        ${canApprove ? "" : "disabled"}>
+                    Approve and pack
+                </button>
+
+                <button type="button"
+                        class="secondary-button"
+                        id="renewal-btn">
+                    Send renewal request to GP
+                </button>
+
+                <button type="button"
+                        class="secondary-button"
+                        id="message-btn">
+                    Message patient
+                </button>
+            </div>
+
+            <div class="action-feedback"
+                 id="action-feedback"
+                 role="status"
+                 aria-live="polite"></div>
+        `;
+
+        attachActions(order, canApprove);
+    }
+
+    function attachActions(order, canApprove) {
+        const approveButton = document.getElementById("approve-btn");
+        const renewalButton = document.getElementById("renewal-btn");
+        const messageButton = document.getElementById("message-btn");
+        const feedback = document.getElementById("action-feedback");
+
+        approveButton.addEventListener("click", () => {
+            if (!canApprove) return;
+
+            feedback.textContent =
+                "Demo only: no approval has been saved. " +
+                "Backend pharmacist review is not connected yet.";
         });
 
-        // Clear previous action message
-        document.getElementById("action-feedback").textContent = "";
+        renewalButton.addEventListener("click", () => {
+            const relatedRenewals = getRelatedRenewals(order.patient_id);
 
+            feedback.textContent = relatedRenewals.some(
+                renewal => renewal.status === "pending"
+            )
+                ? "A renewal request is already pending in the shared data. No new request was sent."
+                : "Demo only: GP request has not been sent or saved.";
+        });
+
+        messageButton.addEventListener("click", () => {
+            feedback.textContent =
+                "Demo only: patient messaging is not connected yet.";
+        });
+    }
+
+    // Renewal request buttons are informational for now.
+    document.querySelectorAll(".renewal-demo-btn").forEach(button => {
+        button.addEventListener("click", () => {
+            button.textContent = "Request shown above";
+        });
     });
-});
 
-
-// ACTION BUTTONS
-// Demo only: no backend changes or messages are sent.
-
-document.getElementById("approve-btn").addEventListener("click", () => {
-
-    document.getElementById("action-feedback").textContent =
-        "Demo: approval selected for " +
-        orders[selectedOrder].name +
-        ". No order has been changed.";
-
-});
-
-
-document.getElementById("renewal-btn").addEventListener("click", () => {
-
-    document.getElementById("action-feedback").textContent =
-        "Demo: renewal request selected for " +
-        orders[selectedOrder].name +
-        ". Nothing has been sent to a GP.";
-
-});
-
-
-document.getElementById("message-btn").addEventListener("click", () => {
-
-    document.getElementById("action-feedback").textContent =
-        "Demo: messaging selected for " +
-        orders[selectedOrder].name +
-        ". No message has been sent.";
-
-});
+    // Automatically select the oldest order.
+    if (orders.length > 0) {
+        selectedOrderId = orders[0].id;
+        renderOrders();
+        renderDetails(orders[0]);
+    }
+}
