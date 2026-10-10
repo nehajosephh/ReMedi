@@ -1,5 +1,6 @@
 import calendar
 import json
+import unicodedata
 import uuid
 from datetime import date, datetime
 from pathlib import Path
@@ -247,3 +248,165 @@ def decide(request_id):
     save_data(data)
     flash(message, "success")
     return redirect(url_for("doctor.home"))
+EXPIRING_SOON_DAYS = 30
+STATE_ORDER = {"expired": 0, "soon": 1, "active": 2}
+
+
+def prescription_state(prescription):
+    today = date.today()
+    expiry = prescription.get("expiry_date")
+    if expiry and date.fromisoformat(expiry) < today:
+        return "expired", "Expired"
+    if prescription.get("repeats_left", 1) <= 0:
+        return "expired", "No repeats left"
+    if expiry and (date.fromisoformat(expiry) - today).days <= EXPIRING_SOON_DAYS:
+        return "soon", "Expires soon"
+    return "active", "Active"
+
+
+def prescription_view(prescription):
+    view = dict(prescription)
+    view["state"], view["state_label"] = prescription_state(prescription)
+    view["expiry_display"] = long_date(prescription.get("expiry_date")) or "no expiry date"
+    view["issued_display"] = long_date(prescription.get("issued_at")) or "unknown"
+    return view
+
+
+def current_prescriptions(data, patient_id):
+    scripts = [
+        prescription_view(p)
+        for p in data.get("prescriptions", [])
+        if p.get("patient_id") == patient_id and p.get("status") != "replaced"
+    ]
+    return sorted(scripts, key=lambda s: (STATE_ORDER[s["state"]], s.get("medication", "")))
+
+
+def plain(text):
+    decomposed = unicodedata.normalize("NFKD", text)
+    return "".join(ch for ch in decomposed if not unicodedata.combining(ch)).lower()
+
+
+def my_patient(data, doc, patient_id):
+    patient = find(data.get("patients", []), "id", patient_id)
+    if patient is None or patient.get("doctor_id") != doc["id"]:
+        return None
+    return patient
+
+
+@doctor_bp.route("/patients")
+def patients():
+    data = load_data()
+    doc = current_doctor(data)
+    if doc is None:
+        return redirect(url_for("doctor.login"))
+
+    query = request.args.get("q", "").strip()
+    rows = []
+    for patient in data.get("patients", []):
+        if patient.get("doctor_id") != doc["id"]:
+            continue
+        name = full_name(patient)
+        if query and plain(query) not in plain(name):
+            continue
+        scripts = current_prescriptions(data, patient["id"])
+        rows.append({
+            "id": patient["id"],
+            "name": name,
+            "dob_display": long_date(patient.get("dob")) or "date unknown",
+            "script_count": len(scripts),
+            "needs_attention": sum(1 for s in scripts if s["state"] != "active"),
+            "review_overdue": review_overdue(patient),
+        })
+    rows.sort(key=lambda row: row["name"])
+    return render_template("doctor/doctor_patients.html", doctor=doc, patients=rows, query=query, active="patients")
+
+
+@doctor_bp.route("/patients/<patient_id>")
+def patient_profile(patient_id):
+    data = load_data()
+    doc = current_doctor(data)
+    if doc is None:
+        return redirect(url_for("doctor.login"))
+
+    patient = my_patient(data, doc, patient_id)
+    if patient is None:
+        flash("That patient isn't registered with you.", "error")
+        return redirect(url_for("doctor.patients"))
+
+    pharmacy = find(data.get("pharmacies", []), "id", patient.get("pharmacy_id"))
+    pending = [
+        r for r in data.get("renewal_requests", [])
+        if r.get("patient_id") == patient_id and r.get("status") == "pending"
+    ]
+    return render_template(
+        "doctor/doctor_patient.html",
+        doctor=doc,
+        patient=patient,
+        patient_name=full_name(patient),
+        dob_display=long_date(patient.get("dob")) or "date unknown",
+        last_review_display=month_year(patient.get("last_review")) or "none recorded",
+        review_overdue=review_overdue(patient),
+        months_since_review=months_since(patient["last_review"]) if patient.get("last_review") else None,
+        pharmacy_name=pharmacy["name"] if pharmacy else "No pharmacy chosen",
+        prescriptions=current_prescriptions(data, patient_id),
+        pending=pending,
+        active="patients",
+    )
+
+
+@doctor_bp.route("/patients/<patient_id>/prescriptions/<prescription_id>/renew", methods=["POST"])
+def renew_from_profile(patient_id, prescription_id):
+    data = load_data()
+    doc = current_doctor(data)
+    if doc is None:
+        return redirect(url_for("doctor.login"))
+
+    patient = my_patient(data, doc, patient_id)
+    if patient is None:
+        flash("That patient isn't registered with you.", "error")
+        return redirect(url_for("doctor.patients"))
+
+    old = find(data.get("prescriptions", []), "id", prescription_id)
+    if old is None or old.get("patient_id") != patient_id:
+        flash("That prescription doesn't belong to this patient.", "error")
+        return redirect(url_for("doctor.patient_profile", patient_id=patient_id))
+    if old.get("status") == "replaced":
+        flash("That prescription has already been renewed.", "error")
+        return redirect(url_for("doctor.patient_profile", patient_id=patient_id))
+
+    months = RENEWAL_MONTHS.get(request.form.get("months", ""))
+    if months is None:
+        flash("Choose how long to renew the prescription for.", "error")
+        return redirect(url_for("doctor.patient_profile", patient_id=patient_id))
+
+    today = date.today()
+    now = datetime.now()
+    expiry = add_months(today, months)
+    old["status"] = "replaced"
+    data["prescriptions"].append({
+        "id": f"rx{now.strftime('%H%M%S%f')}",
+        "patient_id": patient_id,
+        "doctor_id": doc["id"],
+        "medication": old.get("medication", ""),
+        "dosage": old.get("dosage", ""),
+        "issued_at": today.isoformat(),
+        "expiry_date": expiry.isoformat(),
+        "repeats_total": months,
+        "repeats_left": months,
+        "status": "active",
+    })
+
+    for renewal in data.get("renewal_requests", []):
+        if (
+            renewal.get("patient_id") == patient_id
+            and renewal.get("medication") == old.get("medication")
+            and renewal.get("status") == "pending"
+        ):
+            renewal["status"] = "renewed"
+            renewal["renewed_months"] = months
+            renewal["decided_at"] = now.isoformat(timespec="minutes")
+            renewal["decided_by"] = doc["id"]
+
+    save_data(data)
+    flash(f"Renewed {old.get('medication')} for {full_name(patient)} until {long_date(expiry.isoformat())}.", "success")
+    return redirect(url_for("doctor.patient_profile", patient_id=patient_id))

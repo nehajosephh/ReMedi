@@ -9,28 +9,10 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/doctor.css') }}">
 </head>
 <body>
-  <header class="topbar">
-    <div class="topbar-left">
-      <svg width="28" height="28" viewBox="0 0 30 30" aria-hidden="true"><path d="M11 3h8v8h8v8h-8v8h-8v-8H3v-8h8z" fill="currentColor"/></svg>
-      <span class="wordmark">ReMedi</span>
-      <span class="practice">{{ doctor.practice }}</span>
-    </div>
-    <div class="topbar-right">
-      <span class="badge badge-icon">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>
-        Medical Council verified
-      </span>
-      <span>{{ doctor.name }}</span>
-      <a href="{{ url_for('logout') }}" class="topbar-link">Sign out</a>
-    </div>
-  </header>
+  {% set active = "requests" %}
+  {% include "doctor/_header.html" %}
 
   <main class="page">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% for category, message in messages %}
-        <div class="alert alert-{{ category }}" role="status">{{ message }}</div>
-      {% endfor %}
-    {% endwith %}
 
     <section class="stats">
       <div class="stat stat-primary"><span>Renewal requests</span><strong>{{ stats.pending }}</strong></div>
@@ -62,7 +44,10 @@
 
         <section class="detail">
           <div class="card">
-            <h2>{{ selected.patient_name }}</h2>
+            <div class="row wrap between">
+              <h2>{{ selected.patient_name }}</h2>
+              <a href="{{ url_for('doctor.patient_profile', patient_id=selected.patient_id) }}">Open patient profile</a>
+            </div>
             <p class="muted">Born {{ selected.dob_display }}. Last medication review: {{ selected.last_review_display }}.</p>
           </div>
 
