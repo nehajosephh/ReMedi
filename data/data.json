@@ -353,8 +353,10 @@
       "requested_at": "2026-10-10T09:20",
       "previous_script": "Previous script issued 2 April 2026 for 6 months. All repeats used.",
       "note": "Patient asked for this in her monthly order on ReMedi. No issues reported.",
-      "status": "pending",
-      "prescription_id": "rx5"
+      "status": "review_requested",
+      "prescription_id": "rx5",
+      "decided_at": "2026-10-10T14:36",
+      "decided_by": "d1"
     },
     {
       "id": "r2",
@@ -396,7 +398,9 @@
       "requested_at": "2026-10-10T13:53",
       "previous_script": "",
       "note": "",
-      "status": "pending"
+      "status": "review_requested",
+      "decided_at": "2026-10-10T14:41",
+      "decided_by": "d1"
     }
   ]
 }
