@@ -26,12 +26,10 @@ except ImportError:
     print("Pharmacy section not ready yet, skipping")
 
 
+
 @app.route("/")
 def welcome():
-    # For now, go straight to the patient section. Switch back to welcome.html later.
-    if session.get("role") == "patient":
-        return redirect(url_for("patient.home"))
-    return redirect(url_for("patient.start"))
+    return render_template("welcome.html")
 
 
 @app.route("/logout")

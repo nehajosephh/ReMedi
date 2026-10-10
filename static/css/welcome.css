@@ -1,0 +1,162 @@
+
+* {
+    box-sizing: border-box;
+}
+
+body.welcome-body {
+    margin: 0;
+    background: #f1f6f2;
+    color: #20382c;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.welcome-page {
+    width: 100%;
+    max-width: 420px;
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 30px 24px 24px;
+    background: #f8fbf9;
+    border-left: 1px solid #e1eae3;
+    border-right: 1px solid #e1eae3;
+    display: flex;
+    flex-direction: column;
+}
+
+.welcome-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.brand {
+    font-family: Georgia, serif;
+    font-size: 25px;
+    font-weight: bold;
+    color: #337956;
+}
+
+.tagline {
+    background: #e1f0e6;
+    color: #337956;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 9px 12px;
+    border-radius: 20px;
+}
+
+.intro {
+    margin-top: 66px;
+}
+
+.intro h1 {
+    font-size: 30px;
+    line-height: 1.15;
+    margin: 0 0 14px;
+    letter-spacing: -0.7px;
+}
+
+.intro p {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #64776b;
+    margin: 0;
+}
+
+.role-selection {
+    margin-top: 42px;
+}
+
+.role-selection h2 {
+    font-size: 19px;
+    margin: 0 0 10px;
+}
+
+.instruction {
+    font-size: 13px;
+    color: #64776b;
+    line-height: 1.5;
+    margin: 0 0 22px;
+}
+
+.role-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 14px;
+    margin-bottom: 12px;
+    background: white;
+    border: 1px solid #d9e7de;
+    border-radius: 15px;
+    text-decoration: none;
+    color: #20382c;
+    transition: border-color 0.2s,
+                box-shadow 0.2s,
+                transform 0.2s;
+}
+
+.role-card:hover {
+    border-color: #337956;
+    box-shadow: 0 5px 16px rgba(30, 80, 50, 0.08);
+    transform: translateY(-2px);
+}
+
+.role-card:focus-visible {
+    outline: 3px solid #337956;
+    outline-offset: 3px;
+}
+
+.role-icon {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: #e7f3eb;
+    color: #337956;
+    font-size: 24px;
+}
+
+.role-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+}
+
+.role-copy strong {
+    font-size: 15px;
+}
+
+.role-copy small {
+    font-size: 12px;
+    line-height: 1.45;
+    color: #64776b;
+}
+
+.arrow {
+    color: #337956;
+    font-size: 28px;
+}
+
+footer {
+    margin-top: auto;
+    padding-top: 45px;
+    text-align: center;
+    color: #83958a;
+    font-size: 12px;
+}
+
+@media (max-width: 420px) {
+    .welcome-page {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .intro {
+        margin-top: 45px;
+    }
+}
