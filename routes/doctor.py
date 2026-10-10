@@ -427,3 +427,100 @@ def renew_from_profile(patient_id, prescription_id):
     save_data(data)
     flash(f"Renewed {medicine_name(old)} for {full_name(patient)} until {long_date(new['expiry'])}.", "success")
     return back
+
+def check_new_prescription(data, patient_id, form):
+    drug = form.get("drug", "").strip()
+    strength = form.get("strength", "").strip()
+    directions = form.get("directions", "").strip()
+    if not drug or not strength or not directions:
+        return None, "Fill in the medicine, strength and directions."
+
+    try:
+        qty = int(form.get("qty", ""))
+    except ValueError:
+        return None, "Quantity must be a whole number."
+    if not 1 <= qty <= 500:
+        return None, "Quantity must be between 1 and 500."
+
+    try:
+        supply_days = int(form.get("supply_days", ""))
+    except ValueError:
+        return None, "Days supply must be a whole number."
+    if not 1 <= supply_days <= 90:
+        return None, "Days supply must be between 1 and 90."
+
+    months = RENEWAL_MONTHS.get(form.get("months", ""))
+    if months is None:
+        return None, "Choose how long the prescription lasts."
+
+    controlled = form.get("controlled") == "on"
+    if controlled and months != 1:
+        return None, "Controlled drugs can only be prescribed for one month at a time."
+
+    name = f"{drug} {strength}"
+    for existing in current_prescriptions(data, patient_id):
+        if plain(existing["medication"]) == plain(name):
+            return None, f"{name} is already on this patient's list. Renew it from their profile instead."
+
+    return {
+        "drug": drug,
+        "strength": strength,
+        "directions": directions,
+        "qty": qty,
+        "supply_days": supply_days,
+        "months": months,
+        "controlled": controlled,
+        "important": form.get("important") == "on",
+    }, None
+
+
+@doctor_bp.route("/patients/<patient_id>/prescriptions/new", methods=["GET", "POST"])
+def new_prescription(patient_id):
+    data = load_data()
+    doc = current_doctor(data)
+    if doc is None:
+        return redirect(url_for("doctor.login"))
+
+    patient = my_patient(data, doc, patient_id)
+    if patient is None:
+        flash("That patient isn't registered with you.", "error")
+        return redirect(url_for("doctor.patients"))
+
+    suggestions = sorted({p["drug"] for p in data.get("prescriptions", []) if p.get("drug")})
+    page = dict(
+        doctor=doc,
+        patient=patient,
+        patient_name=full_name(patient),
+        suggestions=suggestions,
+        active="patients",
+    )
+    if request.method == "GET":
+        return render_template("doctor/doctor_new_prescription.html", form={}, error=None, **page)
+
+    fields, error = check_new_prescription(data, patient_id, request.form)
+    if error:
+        return render_template("doctor/doctor_new_prescription.html", form=request.form, error=error, **page), 400
+
+    today = date.today()
+    expiry = add_months(today, fields["months"])
+    data.setdefault("prescriptions", []).append({
+        "controlled": fields["controlled"],
+        "important": fields["important"],
+        "status": "active",
+        "id": f"rx{datetime.now().strftime('%H%M%S%f')}",
+        "patient_id": patient_id,
+        "doctor_id": doc["id"],
+        "drug": fields["drug"],
+        "strength": fields["strength"],
+        "directions": fields["directions"],
+        "qty": fields["qty"],
+        "supply_days": fields["supply_days"],
+        "repeats_total": fields["months"],
+        "repeats_used": 0,
+        "issued": today.isoformat(),
+        "expiry": expiry.isoformat(),
+        "last_dispensed": "",
+    })
+    save_data(data)
+    flash(f"Prescribed {fields['drug']} {fields['strength']} for {full_name(patient)} until {long_date(expiry.isoformat())}.", "success")
+    return redirect(url_for("doctor.patient_profile", patient_id=patient_id))

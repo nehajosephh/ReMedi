@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>New prescription | ReMedi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,600&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/doctor.css') }}">
+</head>
+<body>
+  {% include "doctor/_header.html" %}
+
+  <main class="page narrow">
+    <a href="{{ url_for('doctor.patient_profile', patient_id=patient.id) }}" class="back-link">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+      Back to {{ patient_name }}
+    </a>
+
+    <div class="stack-tight">
+      <h1 class="page-title">New prescription</h1>
+      <p class="muted">For {{ patient_name }}. The pharmacy will see it as soon as you save it.</p>
+    </div>
+
+    {% if error %}
+      <div class="alert alert-error" role="alert">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('doctor.new_prescription', patient_id=patient.id) }}" class="card stack" novalidate>
+      <div class="form-grid">
+        <div class="field">
+          <label for="drug">Medicine</label>
+          <input id="drug" name="drug" list="drug-list" autocomplete="off" placeholder="e.g. Ramipril" value="{{ form.get('drug', '') }}">
+          <datalist id="drug-list">
+            {% for name in suggestions %}<option value="{{ name }}">{% endfor %}
+          </datalist>
+        </div>
+        <div class="field">
+          <label for="strength">Strength</label>
+          <input id="strength" name="strength" placeholder="e.g. 5mg" value="{{ form.get('strength', '') }}">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="directions">Directions</label>
+        <input id="directions" name="directions" placeholder="e.g. 1 tablet each morning" value="{{ form.get('directions', '') }}">
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label for="qty">Quantity per supply</label>
+          <input id="qty" name="qty" type="number" min="1" max="500" inputmode="numeric" placeholder="e.g. 28" value="{{ form.get('qty', '') }}">
+        </div>
+        <div class="field">
+          <label for="supply_days">Days each supply lasts</label>
+          <input id="supply_days" name="supply_days" type="number" min="1" max="90" inputmode="numeric" value="{{ form.get('supply_days', '28') }}">
+        </div>
+        <div class="field">
+          <label for="months">Prescription lasts</label>
+          <select id="months" name="months">
+            {% set chosen = form.get('months', '6') %}
+            <option value="6" {% if chosen == '6' %}selected{% endif %}>6 months (5 repeats)</option>
+            <option value="3" {% if chosen == '3' %}selected{% endif %}>3 months (2 repeats)</option>
+            <option value="1" {% if chosen == '1' %}selected{% endif %}>1 month only</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="stack-tight">
+        <label class="check">
+          <input type="checkbox" name="important" {% if not form or form.get('important') %}checked{% endif %}>
+          Important medicine. Warn the patient before they skip it in a monthly order.
+        </label>
+        <label class="check">
+          <input type="checkbox" name="controlled" {% if form.get('controlled') %}checked{% endif %}>
+          Controlled drug. Can only be prescribed for one month at a time.
+        </label>
+      </div>
+
+      <div class="row wrap">
+        <button type="submit" class="btn btn-primary">Save prescription</button>
+        <a href="{{ url_for('doctor.patient_profile', patient_id=patient.id) }}" class="btn btn-plain btn-link">Cancel</a>
+      </div>
+    </form>
+  </main>
+</body>
+</html>

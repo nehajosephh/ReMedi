@@ -265,3 +265,12 @@ p { margin: 0; }
 
 .patient-list { flex: none; }
 .page-head { align-items: center; }
+
+.narrow { max-width: 760px; }
+.stack-tight { display: flex; flex-direction: column; gap: 6px; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+.check { display: flex; gap: 10px; align-items: flex-start; min-height: 44px; padding-top: 10px; font-size: 15px; cursor: pointer; }
+.check input { width: 20px; height: 20px; margin: 0; flex: none; accent-color: var(--green); }
+.btn-link { display: inline-flex; align-items: center; text-decoration: none; }
+.section-head { align-items: center; }
+.section-head h2 { margin: 0; }

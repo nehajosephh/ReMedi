@@ -1,13 +1,15 @@
-
 * {
     box-sizing: border-box;
 }
 
 body.welcome-body {
     margin: 0;
-    background: #f1f6f2;
-    color: #20382c;
-    font-family: Arial, Helvetica, sans-serif;
+    min-height: 100vh;
+    background: #256B49;
+    position: relative;
+    overflow-x: hidden;
+    color: #FFFFFF;
+    font-family: 'Source Sans 3', sans-serif;
 }
 
 .welcome-page {
@@ -16,11 +18,23 @@ body.welcome-body {
     min-height: 100vh;
     margin: 0 auto;
     padding: 30px 24px 24px;
-    background: #f8fbf9;
-    border-left: 1px solid #e1eae3;
-    border-right: 1px solid #e1eae3;
     display: flex;
     flex-direction: column;
+    position: relative;
+    z-index: 1;
+}
+
+body.welcome-body::before {
+    content: "";
+    display: none;
+    position: fixed;
+    width: 380px;
+    height: 380px;
+    left: -40px;
+    bottom: -40px;
+    background: rgba(255, 255, 255, 0.035);
+    clip-path: polygon(35% 0, 65% 0, 65% 35%, 100% 35%, 100% 65%, 65% 65%, 65% 100%, 35% 100%, 35% 65%, 0 65%, 0 35%, 35% 35%);
+    pointer-events: none;
 }
 
 .welcome-header {
@@ -31,17 +45,17 @@ body.welcome-body {
 }
 
 .brand {
-    font-family: Georgia, serif;
-    font-size: 25px;
-    font-weight: bold;
-    color: #337956;
+    font-family: 'Source Serif 4', serif;
+    font-size: 26px;
+    font-weight: 600;
+    color: #FFFFFF;
 }
 
 .tagline {
-    background: #e1f0e6;
-    color: #337956;
-    font-size: 11px;
-    font-weight: bold;
+    background: rgba(255, 255, 255, 0.16);
+    color: #FFFFFF;
+    font-size: 12px;
+    font-weight: 700;
     padding: 9px 12px;
     border-radius: 20px;
 }
@@ -51,16 +65,17 @@ body.welcome-body {
 }
 
 .intro h1 {
-    font-size: 30px;
+    font-size: 32px;
     line-height: 1.15;
     margin: 0 0 14px;
-    letter-spacing: -0.7px;
+    letter-spacing: -0.5px;
+    color: #FFFFFF;
 }
 
 .intro p {
-    font-size: 15px;
+    font-size: 16px;
     line-height: 1.6;
-    color: #64776b;
+    color: #E3F2EA;
     margin: 0;
 }
 
@@ -71,11 +86,12 @@ body.welcome-body {
 .role-selection h2 {
     font-size: 19px;
     margin: 0 0 10px;
+    color: #FFFFFF;
 }
 
 .instruction {
-    font-size: 13px;
-    color: #64776b;
+    font-size: 14px;
+    color: #E3F2EA;
     line-height: 1.5;
     margin: 0 0 22px;
 }
@@ -86,24 +102,24 @@ body.welcome-body {
     gap: 14px;
     padding: 18px 14px;
     margin-bottom: 12px;
-    background: white;
-    border: 1px solid #d9e7de;
-    border-radius: 15px;
+    background: #FFFFFF;
+    border: 2px solid transparent;
+    border-radius: 16px;
     text-decoration: none;
-    color: #20382c;
+    color: #18221C;
     transition: border-color 0.2s,
                 box-shadow 0.2s,
                 transform 0.2s;
 }
 
 .role-card:hover {
-    border-color: #337956;
-    box-shadow: 0 5px 16px rgba(30, 80, 50, 0.08);
+    border-color: #A8D5BC;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
     transform: translateY(-2px);
 }
 
 .role-card:focus-visible {
-    outline: 3px solid #337956;
+    outline: 3px solid #FFFFFF;
     outline-offset: 3px;
 }
 
@@ -114,9 +130,9 @@ body.welcome-body {
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 12px;
-    background: #e7f3eb;
-    color: #337956;
+    border-radius: 24px;
+    background: #2F7D57;
+    color: #FFFFFF;
     font-size: 24px;
 }
 
@@ -128,17 +144,18 @@ body.welcome-body {
 }
 
 .role-copy strong {
-    font-size: 15px;
+    font-size: 17px;
+    color: #18221C;
 }
 
 .role-copy small {
-    font-size: 12px;
+    font-size: 14px;
     line-height: 1.45;
-    color: #64776b;
+    color: #536159;
 }
 
 .arrow {
-    color: #337956;
+    color: #2F7D57;
     font-size: 28px;
 }
 
@@ -146,8 +163,8 @@ footer {
     margin-top: auto;
     padding-top: 45px;
     text-align: center;
-    color: #83958a;
-    font-size: 12px;
+    color: #CFE6D9;
+    font-size: 13px;
 }
 
 @media (max-width: 420px) {
@@ -158,5 +175,63 @@ footer {
 
     .intro {
         margin-top: 45px;
+    }
+}
+
+@media (min-width: 900px) {
+    body.welcome-body::before {
+        display: block;
+    }
+
+    .welcome-page {
+        max-width: 1120px;
+        padding: 40px 56px 32px;
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+        grid-template-rows: auto 1fr auto;
+        grid-template-areas:
+            "header header"
+            "intro roles"
+            "footer footer";
+        column-gap: 72px;
+    }
+
+    .welcome-header {
+        grid-area: header;
+    }
+
+    .intro {
+        grid-area: intro;
+        margin-top: 0;
+        align-self: center;
+    }
+
+    .intro h1 {
+        font-size: 56px;
+        letter-spacing: -1px;
+        margin-bottom: 20px;
+    }
+
+    .intro p {
+        font-size: 20px;
+        max-width: 460px;
+    }
+
+    .role-selection {
+        grid-area: roles;
+        margin-top: 0;
+        align-self: center;
+        padding: 28px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 24px;
+    }
+
+    .role-card:last-child {
+        margin-bottom: 0;
+    }
+
+    footer {
+        grid-area: footer;
+        padding-top: 32px;
     }
 }
