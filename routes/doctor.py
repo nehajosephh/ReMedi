@@ -1,5 +1,6 @@
 import calendar
 import json
+import uuid
 from datetime import date, datetime
 from pathlib import Path
 
@@ -108,25 +109,36 @@ def build_view(renewal, patient, pharmacies):
 
 
 def issue_prescription(data, renewal, doc, months):
-    for old in data.setdefault("prescriptions", []):
-        if (
-            old.get("patient_id") == renewal["patient_id"]
-            and old.get("medication") == renewal["medication"]
-            and old.get("status") == "active"
-        ):
-            old["status"] = "replaced"
+    """Replace the old script with a new one in the shared prescription format."""
+    prescriptions = data.setdefault("prescriptions", [])
+    old = find(prescriptions, "id", renewal.get("prescription_id"))
+    if old is None:  # fall back to matching on the medicine name, e.g. "Amlodipine 5mg"
+        old = next((rx for rx in prescriptions
+                    if rx.get("patient_id") == renewal["patient_id"]
+                    and f"{rx.get('drug')} {rx.get('strength')}" == renewal["medication"]
+                    and rx.get("status") != "replaced"), None)
+    if old:
+        old["status"] = "replaced"
+    old = old or {}
     today = date.today()
-    data["prescriptions"].append({
-        "id": f"rx{len(data['prescriptions']) + 1}",
+    prescriptions.append({
+        "id": f"rx{uuid.uuid4().hex[:6]}",
         "patient_id": renewal["patient_id"],
         "doctor_id": doc["id"],
-        "medication": renewal["medication"],
-        "dosage": renewal.get("dosage", ""),
-        "issued_at": today.isoformat(),
-        "expiry_date": add_months(today, months).isoformat(),
+        "drug": old.get("drug", renewal["medication"]),
+        "strength": old.get("strength", ""),
+        "directions": old.get("directions", renewal.get("dosage", "")),
+        "qty": old.get("qty", 28),
+        "supply_days": old.get("supply_days", 28),
         "repeats_total": months,
-        "repeats_left": months,
+        "repeats_used": 0,
+        "issued": today.isoformat(),
+        "expiry": add_months(today, months).isoformat(),
+        "controlled": old.get("controlled", False),
+        "important": old.get("important", True),
+        "last_dispensed": old.get("last_dispensed"),
         "status": "active",
+        "replaces": old.get("id"),
     })
 
 

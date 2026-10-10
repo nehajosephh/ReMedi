@@ -28,10 +28,12 @@ except ImportError:
 
 @app.route("/")
 def welcome():
-    # For now, go straight to the patient section. Switch back to welcome.html later.
-    if session.get("role") == "patient":
-        return redirect(url_for("patient.home"))
-    return redirect(url_for("patient.start"))
+    # Already signed in? Go straight to your own section.
+    home_pages = {"patient": "patient.home", "doctor": "doctor.home", "pharmacy_demo": "pharmacy.dashboard"}
+    role = session.get("role")
+    if role in home_pages:
+        return redirect(url_for(home_pages[role]))
+    return render_template("welcome.html")
 
 
 @app.route("/logout")

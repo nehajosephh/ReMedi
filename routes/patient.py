@@ -94,12 +94,21 @@ def current_patient(data):
 
 
 def last_order_items(data, patient_id):
-    """Prescription ids from this patient's most recent order (what they had last month)."""
+    """Prescription ids from this patient's most recent order (what they had last month).
+    If the GP has renewed a script since, follow it to the new prescription id."""
     orders = [o for o in data["orders"] if o["patient_id"] == patient_id and o.get("status") != "cancelled"]
     if not orders:
         return []
-    latest = max(orders, key=lambda o: o["created"])
-    return latest["items"]
+    latest = max(orders, key=lambda o: o["created_at"])
+    renewed = {rx["replaces"]: rx["id"] for rx in data["prescriptions"] if rx.get("replaces")}
+    ids = []
+    for item in latest["items"]:
+        rx_id = item.get("prescription_id")
+        while rx_id in renewed:
+            rx_id = renewed[rx_id]
+        if rx_id:
+            ids.append(rx_id)
+    return ids
 
 
 def build_med_list(data, patient_id):
@@ -107,7 +116,7 @@ def build_med_list(data, patient_id):
     last_items = last_order_items(data, patient_id)
     meds = []
     for rx in data["prescriptions"]:
-        if rx["patient_id"] != patient_id or rx.get("superseded"):
+        if rx["patient_id"] != patient_id or rx.get("status") == "replaced":
             continue
         can_order, state, message = item_state(rx)
         last = rx.get("last_dispensed")
