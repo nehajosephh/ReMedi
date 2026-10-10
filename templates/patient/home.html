@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block body %}
+<main class="app">
+  <div class="header">
+    <a class="logo" href="/"><span class="cross">✚</span>ReMedi</a>
+    <span class="greeting">Hi, {{ patient.first_name }} <a href="{{ url_for('logout') }}">Log out</a></span>
+  </div>
+
+  {% if error %}<div class="alert">{{ error }}</div>{% endif %}
+
+  <form method="post" action="{{ url_for('patient.review') }}" id="order-form">
+    <div class="tiles">
+      <div class="tile dark">
+        <div class="label">Order due</div>
+        <div class="value">{{ due }}</div>
+      </div>
+      <button type="button" class="tile tile-btn" id="delivery-tile" aria-label="Change delivery or collection">
+        <div class="label">Delivery <span class="change">Change</span></div>
+        <div class="value" id="delivery-label">{{ "To home" if patient.delivery == "home" else "Collect in store" }}</div>
+      </button>
+      <input type="hidden" name="delivery" id="delivery" value="{{ patient.delivery }}">
+    </div>
+
+    <div class="list-head">
+      <h2>This month</h2>
+      <span class="small" id="count"></span>
+    </div>
+
+    {% for m in meds %}
+      {% if m.can_order %}
+        <label class="med {{ 'on' if m.ticked }}">
+          <span class="med-text">
+            <strong>{{ m.drug }} {{ m.strength }}</strong>
+            <span class="small">
+              {% if m.in_last_order %}{{ m.qty }} {{ "tablets" if m.qty > 1 else "item" }}, {{ m.repeats_left }} repeat{{ "s" if m.repeats_left != 1 }} left
+              {% else %}{{ m.directions }}{% if m.last_ordered %}, last ordered {{ m.last_ordered }}{% endif %}{% endif %}
+            </span>
+            {% if m.state == "last_repeat" %}<span class="warn">{{ m.message }}</span>{% endif %}
+          </span>
+          <input type="checkbox" name="items" value="{{ m.id }}" {{ 'checked' if m.ticked }}
+                 data-important="{{ 'yes' if m.important and m.in_last_order else 'no' }}" data-name="{{ m.drug }}">
+          <span class="box" aria-hidden="true"></span>
+        </label>
+      {% else %}
+        <div class="med blocked">
+          <span class="med-text">
+            <strong>{{ m.drug }} {{ m.strength }}</strong>
+            <span class="warn">{{ m.message }}</span>
+          </span>
+          <label class="gp-ask">
+            <input type="checkbox" name="gp_requests" value="{{ m.id }}" {{ 'checked' if m.in_last_order }}>
+            <span class="ask-off">Ask my GP</span><span class="ask-on">✓ We'll ask your GP</span>
+          </label>
+        </div>
+      {% endif %}
+    {% else %}
+      <div class="card small">No repeat prescriptions on file yet. Your GP can add them.</div>
+    {% endfor %}
+
+    <h3 class="tell-us">Or tell us in your own words</h3>
+    <div class="ai-row">
+      <input type="text" id="ai-message" placeholder="Same as last month, no inhaler" maxlength="300" disabled>
+      <button type="button" class="mic" disabled aria-label="Speak">🎤</button>
+    </div>
+    <p class="small">Coming next: AI ticks the boxes for you. Checked by a pharmacist before anything is sent.</p>
+
+    <div class="sticky-bottom">
+      <button class="btn btn-primary" type="submit" id="review-btn">Review order</button>
+    </div>
+  </form>
+</main>
+<script src="{{ url_for('static', filename='js/patient.js') }}"></script>
+{% endblock %}

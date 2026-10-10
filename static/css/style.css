@@ -92,3 +92,31 @@ input:focus, select:focus { outline: 3px solid #b9d4c0; border-color: var(--gree
 .role .desc { color: var(--muted); font-size: 14px; }
 .role .chev { color: var(--muted); font-size: 22px; }
 .footnote { margin-top: auto; padding-top: 30px; text-align: center; font-size: 13px; color: var(--muted); }
+
+/* patient medication list */
+.tile-btn { text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.tile-btn .change { float: right; color: var(--green); font-weight: 600; font-size: 12px; text-decoration: underline; }
+.list-head { display: flex; justify-content: space-between; align-items: baseline; }
+.med { display: flex; align-items: center; gap: 12px; background: #fff; border: 1.5px solid var(--line);
+       border-radius: var(--radius); padding: 15px 16px; margin-bottom: 10px; cursor: pointer; }
+.med.on { border: 2px solid var(--green); background: var(--green-soft); padding: 14.5px 15.5px; }
+.med-text { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.med input[name="items"] { position: absolute; opacity: 0; pointer-events: none; }
+.med .box { width: 26px; height: 26px; border: 2px solid #b7bfb9; border-radius: 6px; background: #fff; flex: none;
+            display: grid; place-items: center; color: #fff; font-size: 16px; }
+.med.on .box { background: var(--green); border-color: var(--green); }
+.med.on .box::after { content: "✓"; }
+.med:focus-within { outline: 3px solid #b9d4c0; }
+.med.blocked { background: var(--red-soft); border-color: #e8b9b4; cursor: default; }
+.warn { color: var(--red); font-size: 13px; }
+.gp-ask { cursor: pointer; font-size: 14px; font-weight: 700; color: var(--green); text-decoration: underline; margin: 0; }
+.gp-ask input { position: absolute; opacity: 0; }
+.gp-ask .ask-on, .gp-ask input:checked ~ .ask-off { display: none; }
+.gp-ask input:checked ~ .ask-on { display: inline; text-decoration: none; }
+.gp-ask:focus-within { outline: 3px solid #b9d4c0; border-radius: 4px; }
+.tell-us { font-size: 15px; margin: 22px 0 8px; }
+.ai-row { display: flex; gap: 10px; }
+.ai-row input { border-radius: 999px; }
+.mic { width: 48px; height: 48px; border-radius: 50%; border: 0; background: var(--green-soft); flex: none; }
+.sticky-bottom { position: sticky; bottom: 0; padding: 16px 0 6px; background: linear-gradient(transparent, var(--bg) 30%); margin-top: 18px; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }

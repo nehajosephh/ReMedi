@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block body %}
+<main class="app">
+  <div class="header">
+    <a class="logo" href="{{ url_for('patient.home') }}">‹ Back</a>
+    <span class="greeting">Hi, {{ patient.first_name }}</span>
+  </div>
+  <h1>Review your order</h1>
+
+  <h2>Items</h2>
+  {% for m in items %}
+    <div class="card"><strong>{{ m.drug }} {{ m.strength }}</strong><br>
+      <span class="small">{{ m.qty }} {{ "tablets" if m.qty > 1 else "item" }}</span>
+      {% if m.state == "last_repeat" %}<br><span class="warn">{{ m.message }}</span>{% endif %}</div>
+  {% endfor %}
+
+  {% if gp_items %}
+    <h2>We'll ask your GP for</h2>
+    {% for m in gp_items %}<div class="card small">{{ m.drug }} {{ m.strength }}</div>{% endfor %}
+  {% endif %}
+
+  <h2>{{ "Delivery to" if delivery == "home" else "Collect from" }}</h2>
+  <div class="card small">{{ patient.address if delivery == "home" else "Your pharmacy" }}</div>
+
+  <p class="small">Prices and payment come in the next step.</p>
+</main>
+{% endblock %}
