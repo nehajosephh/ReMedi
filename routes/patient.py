@@ -115,25 +115,45 @@ def last_order_items(data, patient_id):
     return ids
 
 
+GP_BADGE_DAYS = 14  # show "Updated by GP" for two weeks after a renewal
+
+
 def build_med_list(data, patient_id):
     """Each of the patient's prescriptions plus everything the screen needs to show it."""
     last_items = last_order_items(data, patient_id)
+    doctors = {d["id"]: d["name"] for d in data.get("doctors", [])}
+    # latest GP decision for each prescription the patient asked about
+    renewals = {}
+    for r in sorted(data.get("renewal_requests", []), key=lambda r: r.get("requested_at", "")):
+        if r.get("patient_id") == patient_id and r.get("prescription_id"):
+            renewals[r["prescription_id"]] = r
     meds = []
     for rx in data["prescriptions"]:
         if rx["patient_id"] != patient_id or rx.get("status") == "replaced":
             continue
         can_order, state, message = item_state(rx)
         last = rx.get("last_dispensed")
+        # a renewed script "replaces" the old one, so ticks carry over from last month
+        in_last = rx["id"] in last_items or rx.get("replaces") in last_items
+        issued = rx.get("issued")
+        gp_updated = bool(rx.get("replaces")) and issued and (today() - parse_date(issued)).days <= GP_BADGE_DAYS
+        renewal = renewals.get(rx["id"])
         meds.append({
             **rx,
             "can_order": can_order,
             "state": state,
             "message": message,
             "repeats_left": repeats_left(rx),
-            "in_last_order": rx["id"] in last_items,
+            "in_last_order": in_last,
             # ticked by default if they had it last month and it can still be ordered
-            "ticked": can_order and rx["id"] in last_items,
+            "ticked": can_order and in_last,
             "last_ordered": parse_date(last).strftime("%B") if last else None,
+            "gp_updated": gp_updated,
+            "gp_note": (f"Renewed by {doctors.get(rx.get('doctor_id'), 'your GP')} on "
+                        f"{parse_date(issued).day} {parse_date(issued).strftime('%b')}, "
+                        f"{rx['repeats_total']} repeat{'s' if rx['repeats_total'] != 1 else ''}") if gp_updated else "",
+            "gp_status": renewal.get("status") if renewal else None,
+            "gp_reason": renewal.get("decline_reason", "") if renewal else "",
         })
     return meds
 
@@ -234,7 +254,7 @@ def place_order():
         "patient_message": note,
         "ai_message": draft.get("ai_message", ""),
         "items": [{"prescription_id": m["id"], "medicine_name": f"{m['drug']} {m['strength']}",
-                   "quantity": m["qty"]} for m in items],
+                   "quantity": m["qty"], "updated_by_gp": m["gp_note"] or ""} for m in items],
         "gp_requests": [m["id"] for m in gp_items],
     }
     data["orders"].append(order)

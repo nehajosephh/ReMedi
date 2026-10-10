@@ -41,8 +41,12 @@ if (dataElement) {
             return "status-warning";
         }
 
-        if (["ready", "approved", "completed"].includes(status)) {
+        if (["ready", "approved", "completed", "paid", "delivered", "collected"].includes(status)) {
             return "status-success";
+        }
+
+        if (status === "renewed") {
+            return "status-gp";
         }
 
         return "status-neutral";
@@ -173,17 +177,32 @@ if (dataElement) {
             && order.status === "pending"
             && orderItems.length > 0;
 
+        // GP decisions stand out: renewals in blue, anything still waiting or refused in orange
+        const doctorName = id => (doctors[id] && doctors[id].name) || "the GP";
+        const shortDate = iso => iso ? formatDate(iso) : "";
         const renewalWarning = relatedRenewals.length
-            ? relatedRenewals.map(renewal => `
+            ? relatedRenewals.map(renewal => {
+                if (renewal.status === "renewed") {
+                    return `
+                <div class="gp-banner">
+                    <strong>Updated by GP:</strong> ${escapeHTML(renewal.medication)}
+                    renewed for ${escapeHTML(renewal.renewed_months || "")} months
+                    by ${escapeHTML(doctorName(renewal.decided_by))} on ${escapeHTML(shortDate(renewal.decided_at))}.
+                    <br>Check the new script before dispensing.
+                </div>`;
+                }
+                const extra = renewal.status === "declined" && renewal.decline_reason
+                    ? `<br>GP's reason: ${escapeHTML(renewal.decline_reason)}` : "";
+                return `
                 <div class="warning-banner">
                     <strong>Prescription renewal:</strong>
                     ${escapeHTML(renewal.medication)}
                     <br>
                     Reason: ${escapeHTML(renewal.reason)}
                     <br>
-                    Status: ${escapeHTML(displayStatus(renewal.status))}
-                </div>
-            `).join("")
+                    Status: ${escapeHTML(displayStatus(renewal.status))}${extra}
+                </div>`;
+            }).join("")
             : "";
 
         const itemsHTML = orderItems.length
@@ -201,19 +220,26 @@ if (dataElement) {
                         === String(name).toLowerCase()
                 );
 
-                const medicationStatus = relatedRenewal
-                    ? "Renewal requested"
-                    : "Requires pharmacist review";
+                const gpUpdated = item.updated_by_gp
+                    || (relatedRenewal && relatedRenewal.status === "renewed");
+
+                const medicationStatus = gpUpdated
+                    ? "Updated by GP"
+                    : relatedRenewal
+                        ? "Renewal requested"
+                        : "Requires pharmacist review";
 
                 return `
-                    <tr>
-                        <td>${escapeHTML(name)}</td>
+                    <tr class="${gpUpdated ? "row-gp" : ""}">
+                        <td>${escapeHTML(name)}${item.updated_by_gp ? `<br><small class="gp-small">${escapeHTML(item.updated_by_gp)}</small>` : ""}</td>
                         <td>${escapeHTML(quantity)}</td>
                         <td>
                             <span class="status-pill ${
-                                relatedRenewal
-                                    ? "status-warning"
-                                    : "status-neutral"
+                                gpUpdated
+                                    ? "status-gp"
+                                    : relatedRenewal
+                                        ? "status-warning"
+                                        : "status-neutral"
                             }">
                                 ${escapeHTML(medicationStatus)}
                             </span>

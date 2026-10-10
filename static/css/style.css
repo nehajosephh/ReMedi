@@ -149,3 +149,21 @@ h2 label { font-size: inherit; font-weight: inherit; margin: 0; }
 .banner-ok { background: var(--green-soft); border-color: #b9d4c0; }
 .invoice .line { display: flex; justify-content: space-between; padding: 6px 0; }
 .invoice .total { border-top: 1px solid var(--line); margin-top: 4px; padding-top: 10px; font-weight: 700; }
+
+/* changes made by the GP */
+.gp-badge { display: inline-block; background: #e3ecfb; color: #1d4b94; border: 1px solid #b8c9ea;
+            font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 999px; margin-left: 6px; vertical-align: 1px; }
+.gp-line { color: #1d4b94; font-size: 13px; font-weight: 600; }
+.med.gp-updated, .card.gp-updated { border-color: #6f93d6; box-shadow: 0 0 0 2px #dbe6f8; }
+.med.on.gp-updated { background: #eef3fc; }
+.med.on.gp-updated .box { background: #1d4b94; border-color: #1d4b94; }
+.gp-wait { font-size: 14px; font-weight: 700; color: var(--muted); text-align: right; }
+
+
+/* ---------- Changes made by the GP stand out in blue ---------- */
+.status-gp { background: #e3ecfb; color: #1d4b94; }
+.gp-banner { background: #eef3fc; border: 1px solid #b8c9ea; border-left: 5px solid #1d4b94; border-radius: 12px;
+             padding: 15px; color: #1d4b94; font-size: 12px; line-height: 1.6; margin-top: 15px; }
+.row-gp td { background: #f3f7fd; }
+.gp-small { color: #1d4b94; font-weight: 600; }
+.renewal-card.renewal-gp { border: 2px solid #6f93d6; background: #f5f8fd; }

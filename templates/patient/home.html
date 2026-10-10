@@ -47,9 +47,10 @@
 
     {% for m in meds %}
       {% if m.can_order %}
-        <label class="med {{ 'on' if m.ticked }}" data-id="{{ m.id }}">
+        <label class="med {{ 'on' if m.ticked }} {{ 'gp-updated' if m.gp_updated }}" data-id="{{ m.id }}">
           <span class="med-text">
-            <strong>{{ m.drug }} {{ m.strength }}</strong>
+            <strong>{{ m.drug }} {{ m.strength }}{% if m.gp_updated %} <span class="gp-badge">Updated by GP</span>{% endif %}</strong>
+            {% if m.gp_updated %}<span class="gp-line">{{ m.gp_note }}</span>{% endif %}
             <span class="small">
               {% if m.in_last_order %}{{ m.qty }} {{ "tablets" if m.qty > 1 else "item" }}, {{ m.repeats_left }} repeat{{ "s" if m.repeats_left != 1 }} left
               {% else %}{{ m.directions }}{% if m.last_ordered %}, last ordered {{ m.last_ordered }}{% endif %}{% endif %}
@@ -65,11 +66,18 @@
           <span class="med-text">
             <strong>{{ m.drug }} {{ m.strength }}</strong>
             <span class="warn">{{ m.message }}</span>
+            {% if m.gp_status == "declined" %}<span class="warn"><strong>GP declined:</strong> {{ m.gp_reason }}</span>{% endif %}
           </span>
-          <label class="gp-ask">
-            <input type="checkbox" name="gp_requests" value="{{ m.id }}" {{ 'checked' if m.in_last_order }}>
-            <span class="ask-off">Ask my GP</span><span class="ask-on">✓ We'll ask your GP</span>
-          </label>
+          {% if m.gp_status == "pending" %}
+            <span class="gp-wait">Waiting on your GP</span>
+          {% elif m.gp_status == "review_requested" %}
+            <span class="gp-wait">Your GP wants you to book a review</span>
+          {% else %}
+            <label class="gp-ask">
+              <input type="checkbox" name="gp_requests" value="{{ m.id }}" {{ 'checked' if m.in_last_order and m.gp_status != "declined" }}>
+              <span class="ask-off">Ask my GP</span><span class="ask-on">✓ We'll ask your GP</span>
+            </label>
+          {% endif %}
         </div>
       {% endif %}
     {% else %}

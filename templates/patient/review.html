@@ -9,7 +9,8 @@
 
   <h2>Items</h2>
   {% for m in items %}
-    <div class="card"><strong>{{ m.drug }} {{ m.strength }}</strong><br>
+    <div class="card {{ 'gp-updated' if m.gp_updated }}"><strong>{{ m.drug }} {{ m.strength }}</strong>
+      {% if m.gp_updated %}<span class="gp-badge">Updated by GP</span><br><span class="gp-line">{{ m.gp_note }}</span>{% endif %}<br>
       <span class="small">{{ m.qty }} {{ "tablets" if m.qty > 1 else "item" }}</span>
       {% if m.state == "last_repeat" %}<br><span class="warn">{{ m.message }}</span>{% endif %}</div>
   {% endfor %}

@@ -643,3 +643,11 @@ body {
         display: none;
     }
 }
+
+/* ---------- Changes made by the GP stand out in blue ---------- */
+.status-gp { background: #e3ecfb; color: #1d4b94; }
+.gp-banner { background: #eef3fc; border: 1px solid #b8c9ea; border-left: 5px solid #1d4b94; border-radius: 12px;
+             padding: 15px; color: #1d4b94; font-size: 12px; line-height: 1.6; margin-top: 15px; }
+.row-gp td { background: #f3f7fd; }
+.gp-small { color: #1d4b94; font-weight: 600; }
+.renewal-card.renewal-gp { border: 2px solid #6f93d6; background: #f5f8fd; }
