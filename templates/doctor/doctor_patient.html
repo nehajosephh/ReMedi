@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ patient_name }} | ReMedi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,600&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/doctor.css') }}">
+</head>
+<body>
+  {% include "doctor/_header.html" %}
+
+  <main class="page">
+    <a href="{{ url_for('doctor.patients') }}" class="back-link">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+      All patients
+    </a>
+
+    <section class="card stack">
+      <h1 class="page-title">{{ patient_name }}</h1>
+      <div class="details">
+        <div><span class="label">Born</span><span>{{ dob_display }}</span></div>
+        <div><span class="label">Scheme</span><span>{{ patient.scheme or 'Not recorded' }}</span></div>
+        <div><span class="label">Pharmacy</span><span>{{ pharmacy_name }}</span></div>
+        <div><span class="label">Phone</span><span>{{ patient.phone or 'Not recorded' }}</span></div>
+        <div><span class="label">Address</span><span>{{ patient.address or 'Not recorded' }}{% if patient.eircode %}, {{ patient.eircode }}{% endif %}</span></div>
+        <div><span class="label">Last medication review</span><span {% if review_overdue %}class="warning"{% endif %}>{{ last_review_display }}{% if review_overdue %} ({{ months_since_review }} months ago){% endif %}</span></div>
+      </div>
+    </section>
+
+    {% if pending %}
+      <section class="alert alert-success">
+        {{ pending|length }} renewal request{{ '' if pending|length == 1 else 's' }} from the pharmacy waiting for this patient.
+        <a href="{{ url_for('doctor.home', request=pending[0].id) }}">Open in renewal requests</a>
+      </section>
+    {% endif %}
+
+    <section class="stack">
+      <h2>Prescriptions</h2>
+      {% if not prescriptions %}
+        <div class="card empty">
+          <p class="muted">No prescriptions on record for this patient.</p>
+        </div>
+      {% endif %}
+      {% for rx in prescriptions %}
+        <article class="card stack rx rx-{{ rx.state }}">
+          <div class="row wrap between">
+            <strong class="big">{{ rx.medication }}</strong>
+            <span class="row wrap">
+              {% if rx.controlled %}<span class="pill pill-soon">Controlled drug</span>{% endif %}
+              <span class="pill pill-{{ rx.state }}">{{ rx.state_label }}</span>
+            </span>
+          </div>
+          <p class="muted">{{ rx.directions }}. Quantity {{ rx.qty }}.</p>
+          <p>Issued {{ rx.issued_display }}. Expires {{ rx.expiry_display }}. {{ rx.repeats_left }} of {{ rx.repeats_total }} repeats left. Last dispensed {{ rx.dispensed_display }}.</p>
+          <form method="post" action="{{ url_for('doctor.renew_from_profile', patient_id=patient.id, prescription_id=rx.id) }}" class="row wrap end">
+            <div class="field grow">
+              <label for="months-{{ rx.id }}">Renew for</label>
+              <select id="months-{{ rx.id }}" name="months">
+                {% if rx.controlled %}
+                  <option value="1">1 month only (controlled drug)</option>
+                {% else %}
+                  <option value="6">6 months (5 repeats)</option>
+                  <option value="3">3 months (2 repeats)</option>
+                  <option value="1">1 month only</option>
+                {% endif %}
+              </select>
+            </div>
+            <button type="submit" class="btn {% if rx.state == 'active' %}btn-outline{% else %}btn-primary{% endif %}">Renew prescription</button>
+          </form>
+        </article>
+      {% endfor %}
+    </section>
+  </main>
+</body>
+</html>
