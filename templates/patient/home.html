@@ -57,9 +57,9 @@
       <div class="card small">No repeat prescriptions on file yet. Your GP can add them.</div>
     {% endfor %}
 
-     <h3 class="tell-us">Or tell us in your own words</h3>
+    <h3 class="tell-us">Or tell us in your own words</h3>
     <div class="ai-row">
-      <input type="text" id="ai-message" placeholder="I don't need the cholesterol meds this month" maxlength="300"
+      <input type="text" id="ai-message" maxlength="300"
              autocomplete="off" aria-label="Tell us what you need">
       <button type="button" class="mic" id="mic-btn" aria-label="Speak instead of typing">🎤</button>
     </div>
@@ -67,6 +67,7 @@
     <p class="small">You can say "cholesterol tablets" or "my painkillers". AI ticks the boxes, you check them, and a pharmacist checks every order.</p>
     <div id="ai-result" class="ai-result" hidden></div>
     <input type="hidden" name="ai_message" id="ai-message-sent">
+    <input type="hidden" name="pharmacist_note" id="pharmacist-note">
 
     <div class="sticky-bottom">
       <button class="btn btn-primary" type="submit" id="review-btn">Review order</button>

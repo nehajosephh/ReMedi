@@ -27,8 +27,6 @@ form.addEventListener("submit", (e) => {
     e.preventDefault();
   }
 });
-
-
 // ---------------- AI search bar ----------------
 // Sends what the patient typed to /patient/assist. The server asks OpenRouter which boxes
 // to tick or untick, checks the answer, and we show the change for the patient to confirm.
@@ -83,10 +81,15 @@ function showResult(r, tickedBefore, message) {
   form.querySelectorAll(".med.changed").forEach(c => c.classList.remove("changed"));
   aiBox.hidden = false;
 
+  // Anything the boxes can't handle (holidays, extra quantity, side effects) goes to the pharmacist
+  if (r.pharmacist_note) document.getElementById("pharmacist-note").value = r.pharmacist_note;
+  const noteLine = r.pharmacist_note
+    ? `<div class="small"><strong>Note for your pharmacist:</strong> ${escapeText(r.pharmacist_note)}<br>You can check it on the next screen.</div>` : "";
+
   if (r.action === "clarify") {
     aiBox.className = "ai-result ask";
     aiBox.innerHTML = `<strong>Quick question</strong><div>${escapeText(r.question)}</div>
-      <div class="small">Nothing has been changed.</div>`;
+      <div class="small">Nothing has been changed.</div>${noteLine}`;
     return;
   }
 
@@ -100,7 +103,7 @@ function showResult(r, tickedBefore, message) {
   const lines = [];
   if (r.tick.length) lines.push(`Ticked: ${r.tick.map(medName).join(", ")}`);
   if (r.untick.length) lines.push(`Unticked: ${r.untick.map(medName).join(", ")}`);
-  if (!r.tick.length && !r.untick.length) lines.push("No changes needed, your list already matches.");
+  if (!r.tick.length && !r.untick.length) lines.push(r.pharmacist_note ? "No changes to your list." : "No changes needed, your list already matches.");
   if (r.blocked.length) lines.push(`<span class="warn">${r.blocked.map(medName).join(", ")} can't be ordered right now. Tap "Ask my GP" on it.</span>`);
   if (r.not_on_list.length) lines.push(`<span class="warn">${escapeText(r.not_on_list.join(", "))} isn't on your prescription, so I can't add it. The pharmacy can help in store.</span>`);
 
@@ -108,6 +111,7 @@ function showResult(r, tickedBefore, message) {
   aiBox.innerHTML = `<strong>I've updated your list</strong>
     <div>${lines.join("<br>")}</div>
     ${r.explanation ? `<div class="small">${escapeText(r.explanation)}</div>` : ""}
+    ${noteLine}
     <div class="ai-actions"><button type="button" class="btn btn-primary" id="ai-ok">Looks right</button>
       <button type="button" class="btn btn-outline" id="ai-undo">Undo</button></div>
     <div class="small">${r.source === "ai" ? "Suggested by AI" : "Matched by keywords (AI offline)"}. Highlighted boxes changed. It can make mistakes, so check them.</div>`;
@@ -124,6 +128,7 @@ function showResult(r, tickedBefore, message) {
     form.querySelectorAll('input[name="items"]').forEach(b => { b.checked = undoState.includes(b.value); });
     form.querySelectorAll(".med.changed").forEach(c => c.classList.remove("changed"));
     document.getElementById("ai-message-sent").value = "";
+    document.getElementById("pharmacist-note").value = "";
     aiBox.hidden = true;
     updateCount();
   };

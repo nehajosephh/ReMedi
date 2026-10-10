@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block body %}
+<main class="app">
+  <div class="header">
+    <a class="logo" href="{{ url_for('patient.home') }}"><span class="cross">✚</span>ReMedi</a>
+    <span class="greeting">Hi, {{ patient.first_name }} <a href="{{ url_for('logout') }}">Log out</a></span>
+  </div>
+
+  <p class="small" style="margin:0">Order {{ order.id }}</p>
+  <h1>Sent to {{ pharmacy.name if pharmacy else "your pharmacy" }}</h1>
+  <p class="sub">
+    {% if order.status == "needs_attention" %}A pharmacist is checking it. Some items are waiting on your GP.
+    {% elif order.status == "pending" %}A pharmacist will check it, usually within 1 working day.
+    {% else %}Status: {{ order.status | replace("_", " ") }}{% endif %}
+  </p>
+
+  <h2>Items</h2>
+  {% for item in order["items"] %}<div class="card"><strong>{{ item.medicine_name }}</strong>
+    <span class="small"> · {{ item.quantity }}</span></div>{% endfor %}
+
+  {% if gp_names %}
+    <h2>Asked your GP for</h2>
+    {% for name in gp_names %}<div class="card small">{{ name }}</div>{% endfor %}
+  {% endif %}
+
+  {% if order.patient_message %}
+    <h2>Your note to the pharmacist</h2>
+    <div class="card small">{{ order.patient_message }}</div>
+  {% endif %}
+
+  <h2>{{ "Delivery to" if order.fulfilment == "delivery" else "Collect from" }}</h2>
+  <div class="card small">{{ patient.address if order.fulfilment == "delivery" else pharmacy.name }}
+    · Pay {{ "on delivery" if order.fulfilment == "delivery" else "when you collect" }}</div>
+
+  <p style="margin-top:20px"><a class="link" href="{{ url_for('patient.home') }}">Back to my medications</a></p>
+</main>
+{% endblock %}

@@ -282,6 +282,45 @@
           "quantity": 28
         }
       ]
+    },
+    {
+      "id": "ord9700e4",
+      "patient_id": "p1",
+      "pharmacy_id": "ph1",
+      "created_at": "2026-10-10T14:04",
+      "status": "needs_attention",
+      "payment_method": "cash",
+      "payment_status": "unpaid",
+      "fulfilment": "delivery",
+      "delivery_date": "",
+      "delivery_slot": "",
+      "patient_message": "can i get 2 months of this cuz im going away",
+      "ai_message": "need the inhaler",
+      "items": [
+        {
+          "prescription_id": "rx1",
+          "medicine_name": "Atorvastatin 20mg",
+          "quantity": 28
+        },
+        {
+          "prescription_id": "rx2",
+          "medicine_name": "Metformin 500mg",
+          "quantity": 56
+        },
+        {
+          "prescription_id": "rx3",
+          "medicine_name": "Lisinopril 10mg",
+          "quantity": 28
+        },
+        {
+          "prescription_id": "rx4",
+          "medicine_name": "Salbutamol inhaler 100mcg",
+          "quantity": 1
+        }
+      ],
+      "gp_requests": [
+        "rx5"
+      ]
     }
   ],
   "renewal_requests": [

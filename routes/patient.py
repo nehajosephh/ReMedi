@@ -1,9 +1,11 @@
 """Patient section (Neha)."""
 import re
 import uuid
+from datetime import datetime
 
 from flask import Blueprint, jsonify, redirect, render_template, request, session, url_for
 from services.prescription_rules import item_state, next_due_date, parse_date, repeats_left, today
+
 from services.ai_assistant import understand_request
 from services.storage import find_by, load_data, login_required, save_data
 
@@ -167,12 +169,105 @@ def review():
     if not chosen:
         return redirect(url_for("patient.home", error="Tick at least one medication to continue."))
 
-    # Remember the choice for the next screens (review, payment)
-    session["draft_order"] = {"items": chosen, "gp_requests": gp_requests, "delivery": delivery}
+    # Remember the choice for the next screen. The AI may have drafted a note for the pharmacist.
+    session["draft_order"] = {"items": chosen, "gp_requests": gp_requests, "delivery": delivery,
+                              "ai_message": request.form.get("ai_message", "")[:300]}
     return render_template("patient/review.html", patient=patient,
                            items=[meds[i] for i in chosen],
                            gp_items=[meds[i] for i in gp_requests],
-                           delivery=delivery)
+                           delivery=delivery,
+                           note=request.form.get("pharmacist_note", "")[:500])
+
+
+def active_order(data, patient_id):
+    """An order that's still being dealt with, so we don't let the patient send two at once."""
+    finished = {"delivered", "collected", "cancelled"}
+    return next((o for o in data["orders"]
+                 if o["patient_id"] == patient_id and o.get("status") not in finished), None)
+
+
+@patient_bp.route("/place-order", methods=["POST"])
+@login_required("patient")
+def place_order():
+    """Save the order in the shared format so it appears on the pharmacy dashboard,
+    and send any 'Ask my GP' items to the GP as renewal requests."""
+    data = load_data()
+    patient = current_patient(data)
+    draft = session.get("draft_order")
+    if not draft:
+        return redirect(url_for("patient.home", error="Your order timed out. Please tick your items again."))
+    if active_order(data, patient["id"]):
+        return redirect(url_for("patient.home", error="You already have an order with the pharmacy. "
+                                                      "Message them if you need to change it."))
+
+    meds = {m["id"]: m for m in build_med_list(data, patient["id"])}
+    items = [meds[i] for i in draft["items"] if i in meds and meds[i]["can_order"]]  # check again
+    if not items:
+        return redirect(url_for("patient.home", error="None of those items can be ordered any more."))
+    gp_items = [meds[i] for i in draft["gp_requests"] if i in meds and not meds[i]["can_order"]]
+    note = request.form.get("note", "").strip()[:500]
+    now = datetime.now().isoformat(timespec="minutes")
+    delivery = draft["delivery"] == "home"
+
+    order = {
+        "id": "ord" + uuid.uuid4().hex[:6],
+        "patient_id": patient["id"],
+        "pharmacy_id": patient["pharmacy_id"],
+        "created_at": now,
+        # anything waiting on the GP needs the pharmacist's attention
+        "status": "needs_attention" if gp_items else "pending",
+        "payment_method": "cash" if delivery else "pharmacy",
+        "payment_status": "unpaid",
+        "fulfilment": "delivery" if delivery else "collection",
+        "delivery_date": "",
+        "delivery_slot": "",
+        "patient_message": note,
+        "ai_message": draft.get("ai_message", ""),
+        "items": [{"prescription_id": m["id"], "medicine_name": f"{m['drug']} {m['strength']}",
+                   "quantity": m["qty"]} for m in items],
+        "gp_requests": [m["id"] for m in gp_items],
+    }
+    data["orders"].append(order)
+
+    # "Ask my GP" items become renewal requests on the GP dashboard (no duplicates)
+    for m in gp_items:
+        already = any(r.get("prescription_id") == m["id"] and r.get("status") == "pending"
+                      for r in data.setdefault("renewal_requests", []))
+        if already:
+            continue
+        data["renewal_requests"].append({
+            "id": "r" + uuid.uuid4().hex[:6],
+            "patient_id": patient["id"],
+            "pharmacy_id": patient["pharmacy_id"],
+            "prescription_id": m["id"],
+            "medication": f"{m['drug']} {m['strength']}",
+            "dosage": f"{m['directions']}, {m['qty']} tablets",
+            "reason": m["message"].split(" on ")[0].lower() if m["message"] else m["state"],
+            "requested_at": now,
+            "previous_script": f"Previous script issued {m.get('issued', 'unknown')}, "
+                               f"{m['repeats_total']} dispensings.",
+            "note": f"Patient asked for this in their monthly order on ReMedi. {note}".strip(),
+            "status": "pending",
+        })
+
+    save_data(data)
+    session.pop("draft_order", None)
+    return redirect(url_for("patient.order_status", order_id=order["id"]))
+
+
+@patient_bp.route("/order/<order_id>")
+@login_required("patient")
+def order_status(order_id):
+    data = load_data()
+    patient = current_patient(data)
+    order = find_by(data["orders"], "id", order_id)
+    if not order or order["patient_id"] != patient["id"]:
+        return redirect(url_for("patient.home"))
+    pharmacy = find_by(data["pharmacies"], "id", order["pharmacy_id"])
+    gp_names = [f"{rx['drug']} {rx['strength']}" for rx in data["prescriptions"]
+                if rx["id"] in order.get("gp_requests", [])]
+    return render_template("patient/order.html", patient=patient, order=order,
+                           pharmacy=pharmacy, gp_names=gp_names)
 
 
 @patient_bp.route("/assist", methods=["POST"])

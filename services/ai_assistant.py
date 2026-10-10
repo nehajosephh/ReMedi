@@ -38,6 +38,9 @@ Rules:
 5. If they ask for something NOT on their list (e.g. paracetamol, a new medicine), put their words in "not_on_list". Never tick anything for it.
 6. If a phrase could mean more than one medicine on their list and you can't tell which (e.g. "my blood pressure tablet" when they have two), or the message is too vague ("I need my tablets"), set "action" to "clarify" and ask ONE short question. Don't guess.
 7. Never give medical advice.
+8. If the message has anything a pharmacist should know that ticking boxes can't handle
+   (extra quantity, going on holiday, side effects, a question, ordering for someone else, a change in how they take it),
+   write it as a short note to the pharmacist in "pharmacist_note", in the patient's voice. Otherwise leave it "".
 
 Reply with JSON only:
 {"action": "update" or "clarify",
@@ -45,6 +48,7 @@ Reply with JSON only:
  "matches": [{"said": "cholesterol meds", "id": "rx1"}],
  "not_on_list": [],
  "question": "",
+ "pharmacist_note": "",
  "explanation": "one short plain-English sentence for the patient"}
 """
 
@@ -109,11 +113,14 @@ EVERYDAY_NAMES = {
     "water tablet": ["furosemide", "bendroflumethiazide"],
 }
 NEGATIVE = re.compile(r"\b(no|not|don'?t|dont|skip|without|except|stop|leave out)\b")
+NOTE_WORDS = re.compile(r"\b(holiday|away|extra|two months|2 months|double|side effect|sick|dizzy|reaction|"
+                        r"question|husband|wife|mum|dad|instead)\b|\?")
 USUAL = re.compile(r"\b(same as last month|the usual|same again|usual)\b")
 
 
 def keyword_fallback(message, meds, ticked_ids, last_month_ids):
     text = message.lower()
+    note = message if NOTE_WORDS.search(text) else ""
     tick, untick, matches = [], [], []
     if USUAL.search(text):
         tick += [i for i in last_month_ids if i not in ticked_ids]
@@ -129,11 +136,14 @@ def keyword_fallback(message, meds, ticked_ids, last_month_ids):
                 matches.append({"said": said, "id": m["id"]})
                 (untick if negative else tick).append(m["id"])
     if not tick and not untick:
+        if note:  # nothing to tick, but there's something for the pharmacist
+            return {"action": "update", "tick": [], "untick": [], "matches": [], "not_on_list": [],
+                    "question": "", "pharmacist_note": note, "explanation": ""}
         return {"action": "clarify", "tick": [], "untick": [], "matches": [], "not_on_list": [],
                 "question": "Which of your medicines do you mean?",
                 "explanation": "I couldn't match that to anything on your list."}
     return {"action": "update", "tick": tick, "untick": untick, "matches": matches,
-            "not_on_list": [], "question": "", "explanation": ""}
+            "not_on_list": [], "question": "", "pharmacist_note": note, "explanation": ""}
 
 
 # ---------------- safety net: check everything the AI said ----------------
@@ -145,6 +155,7 @@ def check_answer(raw, meds):
               "not_on_list": [str(x) for x in raw.get("not_on_list") or [] if str(x).strip()],
               "question": (raw.get("question") or "").strip(),
               "explanation": (raw.get("explanation") or "").strip()[:200],
+              "pharmacist_note": str(raw.get("pharmacist_note") or "").strip()[:300],
               "matches": [m for m in raw.get("matches") or [] if isinstance(m, dict) and m.get("id") in by_id]}
     for rx_id in raw.get("tick") or []:
         if rx_id not in by_id:

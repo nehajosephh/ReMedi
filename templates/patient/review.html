@@ -22,6 +22,17 @@
   <h2>{{ "Delivery to" if delivery == "home" else "Collect from" }}</h2>
   <div class="card small">{{ patient.address if delivery == "home" else "Your pharmacy" }}</div>
 
-  <p class="small">Prices and payment come in the next step.</p>
+  <form method="post" action="{{ url_for('patient.place_order') }}">
+    <h2><label for="note">Anything the pharmacist should know?</label></h2>
+    <textarea id="note" name="note" rows="3" maxlength="500"
+              placeholder="e.g. I'm going on holiday on the 20th, can I get two months' worth?">{{ note }}</textarea>
+    <p class="small">{% if note %}We filled this in from what you typed earlier. Change it if it's not right.
+      {% else %}Optional. Questions, holidays, side effects, or anything else.{% endif %}</p>
+
+    <div class="sticky-bottom">
+      <button class="btn btn-primary" type="submit">Send order to pharmacy</button>
+      <p class="small" style="text-align:center">Pay {{ "on delivery" if delivery == "home" else "when you collect" }}. A pharmacist checks every order before it's packed.</p>
+    </div>
+  </form>
 </main>
 {% endblock %}
