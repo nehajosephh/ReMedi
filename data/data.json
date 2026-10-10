@@ -24,9 +24,6 @@
      "doctor_id": "d2", "pharmacy_id": "ph2", "delivery": "home", "last_review": "2026-05-15"},
     {"id": "p632689", "first_name": "Neha", "last_name": "Joseph", "dob": "2026-10-10", "phone": "353894180459",
      "address": "232 Jamestown Road", "eircode": "D11NX05", "scheme": "Medical card",
-     "doctor_id": "d1", "pharmacy_id": "ph2", "delivery": "home"},
-    {"id": "p27aa18", "first_name": "Neha", "last_name": "Joseph", "dob": "2026-10-10", "phone": "353894180459",
-     "address": "232 Jamestown Road", "eircode": "D11NX05", "scheme": "Medical card",
      "doctor_id": "d1", "pharmacy_id": "ph2", "delivery": "home"}
   ],
   "prescriptions": [
